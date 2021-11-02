@@ -1,0 +1,6 @@
+# ignore images
+*.jpeg
+/runs/
+/splits/
+/.ipynb_checkpoints/
+/.idea/

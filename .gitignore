@@ -4,3 +4,7 @@
 /splits/
 /.ipynb_checkpoints/
 /.idea/
+/colab/
+/simple_check.py
+/venv/
+/ds/__pycache__/

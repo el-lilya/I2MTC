@@ -6,11 +6,12 @@ from ds.tensorboard import TensorboardExperiment
 
 from ds.load_data import get_data, train_test_split, get_transforms
 from ds.dataset import create_data_loader
+import datetime
 
 # tensorboard --logdir runs
 
 # Hyperparameters
-EPOCH_COUNT = 2
+EPOCH_COUNT = 1
 LR = 1e-4  # 5e-5
 LOG_PATH = "./runs"
 batch_size = 4
@@ -25,8 +26,8 @@ device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 baseline_name = 'resnet50'
 
 # experiment settings
-kk = [1, 2, 3]
-number_of_exp = 2
+kk = [1]
+number_of_exp = 1
 
 
 def main():
@@ -35,7 +36,8 @@ def main():
     for k in kk:
         for experiment in range(number_of_exp):
             # Setup the experiment tracker
-            tracker = TensorboardExperiment(log_path=LOG_PATH+'/'+f'k={k}/{experiment}')
+            name_time = datetime.datetime.now().strftime('%d%h_%I:%M')
+            tracker = TensorboardExperiment(log_path=LOG_PATH+'/'+f'k={k}_exp#{experiment}')
 
             # Create the data loaders
             train, test = train_test_split(df, k, experiment)

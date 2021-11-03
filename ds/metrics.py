@@ -1,9 +1,10 @@
 from dataclasses import dataclass, field
+from typing import List
 
 
 @dataclass
 class Metric:
-    values: list[float] = field(default_factory=list)
+    values: List[float] = field(default_factory=list)
     running_total: float = 0.0
     num_updates: float = 0.0
     average: float = 0.0

@@ -4,6 +4,7 @@ import numpy as np
 from matplotlib import pyplot as plt
 from sklearn.metrics import ConfusionMatrixDisplay, confusion_matrix
 from torch.utils.tensorboard import SummaryWriter
+from typing import List, Tuple
 
 from ds.tracking import Stage
 from ds.utils import create_experiment_log_dir
@@ -45,7 +46,7 @@ class TensorboardExperiment:
         self._writer.add_scalar(tag, value, step)
 
     def add_epoch_confusion_matrix(
-        self, y_true: list[np.array], y_pred: list[np.array], step: int
+        self, y_true: List[np.array], y_pred: List[np.array], step: int
     ):
         y_true, y_pred = self.collapse_batches(y_true, y_pred)
         fig = self.create_confusion_matrix(y_true, y_pred, step)
@@ -54,17 +55,17 @@ class TensorboardExperiment:
 
     @staticmethod
     def collapse_batches(
-        y_true: list[np.array], y_pred: list[np.array]
-    ) -> tuple[np.ndarray, np.ndarray]:
+        y_true: List[np.array], y_pred: List[np.array]
+    ) -> Tuple[np.ndarray, np.ndarray]:
         return np.concatenate(y_true), np.concatenate(y_pred)
 
     def create_confusion_matrix(
-        self, y_true: list[np.array], y_pred: list[np.array], step: int
+        self, y_true: List[np.array], y_pred: List[np.array], step: int
     ) -> plt.Figure:
         cm = ConfusionMatrixDisplay(confusion_matrix(y_true, y_pred)).plot(cmap="Blues")
         cm.ax_.set_title(f"{self.stage.name} Epoch: {step}")
         return cm.figure_
 
     def add_hparams(self, hparams: dict, metric_dict: dict):
-        run_name = datetime.datetime.now().strftime('%h:%m_%d/%m/')
+        run_name = datetime.datetime.now().strftime('%d%h_%I_%M')
         return self._writer.add_hparams(hparams, metric_dict, run_name = run_name)

@@ -1,6 +1,9 @@
 from enum import Enum, auto
 from pathlib import Path
-from typing import Protocol
+# from typing import Protocol
+from typing import List
+from typing_extensions import Protocol
+
 
 
 import numpy as np
@@ -23,7 +26,7 @@ class ExperimentTracker(Protocol):
         """Implements logging a epoch-level metric."""
 
     def add_epoch_confusion_matrix(
-        self, y_true: list[np.array], y_pred: list[np.array], step: int
+        self, y_true: List[np.array], y_pred: List[np.array], step: int
     ):
         """Implements logging a confusion matrix at epoch-level."""
     def add_hparams(self, hparams: dict, metric_dict: dict):

@@ -1,4 +1,5 @@
 import pathlib
+from typing import List
 
 
 def create_experiment_log_dir(root: str, parents: bool = True) -> str:
@@ -28,9 +29,9 @@ def create_from_existing(root: pathlib.Path) -> pathlib.Path:
     return child
 
 
-def is_first_experiment(children: list[int]) -> bool:
+def is_first_experiment(children: List[int]) -> bool:
     return len(children) == 0
 
 
-def increment_experiment_number(children: list[int]) -> str:
+def increment_experiment_number(children: List[int]) -> str:
     return str(max(children) + 1)

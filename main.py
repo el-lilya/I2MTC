@@ -8,14 +8,14 @@ from ds.load_data import get_data, train_test_split, get_transforms
 from ds.dataset import create_data_loader
 import datetime
 
-# tensorboard --logdir runs
+# c
 
 # Hyperparameters
-EPOCH_COUNT = 1
+EPOCH_COUNT = 10
 LR = 1e-4  # 5e-5
 LOG_PATH = "./runs"
-batch_size = 4
-
+batch_size_train = 8
+batch_size_test = 16
 # Data configuration
 # root = '/content/drive/MyDrive/I2MTC' # for colab
 root = '.'
@@ -26,8 +26,8 @@ device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 baseline_name = 'resnet50'
 
 # experiment settings
-kk = [1]
-number_of_exp = 1
+kk = [1, 3, 5]
+number_of_exp = 5
 
 
 def main():
@@ -36,17 +36,17 @@ def main():
     for k in kk:
         for experiment in range(number_of_exp):
             # Setup the experiment tracker
-            name_time = datetime.datetime.now().strftime('%d%h_%I:%M')
-            tracker = TensorboardExperiment(log_path=LOG_PATH+'/'+f'k={k}_exp#{experiment}')
+            name_time = datetime.datetime.now().strftime('%d%h_%I_%M')
+            tracker = TensorboardExperiment(log_path=LOG_PATH+'/'+f'k={k}_exp#{experiment}/{name_time}')
 
             # Create the data loaders
             train, test = train_test_split(df, k, experiment)
             train.to_csv(f'./splits/train_k{k}_#{experiment}')
             transforms = get_transforms()
             train_loader = create_data_loader(annotations_file=train, root=root, transform=transforms['train'],
-                                              batch_size=batch_size)
+                                              batch_size=batch_size_train)
             test_loader = create_data_loader(annotations_file=test, root=root, transform=transforms['test'],
-                                             batch_size=batch_size)
+                                             batch_size=batch_size_test)
 
             # Model and Optimizer
             model = ModelBaseline(baseline_name, num_classes)
@@ -54,8 +54,8 @@ def main():
             optimizer = torch.optim.Adam(model.parameters(), lr=LR)
 
             # Create the runners
-            test_runner = Runner(test_loader, model)
-            train_runner = Runner(train_loader, model, optimizer)
+            test_runner = Runner(test_loader, model, device)
+            train_runner = Runner(train_loader, model, device, optimizer)
 
             # Run the epochs
             for epoch_id in range(EPOCH_COUNT):
@@ -73,13 +73,14 @@ def main():
                 print("\n" + summary + "\n")
 
                 # Flush the tracker after every epoch for live updates
-                tracker.add_hparams({'k': k, '#_of_exp': experiment, 'epochs': EPOCH_COUNT, 'batch_size': batch_size},
+                tracker.add_hparams({'k': k, '#_of_exp': experiment, 'epochs': EPOCH_COUNT},
                                     {'train_accuracy': train_runner.avg_accuracy,
                                      'test_accuracy': test_runner.avg_accuracy})
                 # Reset the runners
                 train_runner.reset()
                 test_runner.reset()
                 tracker.flush()
+            torch.cuda.empty_cache()
 
 
 if __name__ == "__main__":

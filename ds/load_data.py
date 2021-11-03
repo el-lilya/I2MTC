@@ -42,7 +42,8 @@ def train_test_split(df: pd.DataFrame, k: int, num_of_exp: int):
     train = stratified_sample_df(df, 'label', k, num_of_exp)
     # indices = list(map(int, train.index))
     test = df.loc[[x for x in df.index if x not in train.index]]
-    if ~torch.cuda.is_available():
+    test = stratified_sample_df(test, 'label', 20)
+    if not torch.cuda.is_available():
         test = test.sample(k * num_classes, random_state=42)  # for cpu to train faster
     train.reset_index(drop=True, inplace=True)
     test.reset_index(drop=True, inplace=True)

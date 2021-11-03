@@ -67,5 +67,6 @@ class TensorboardExperiment:
         return cm.figure_
 
     def add_hparams(self, hparams: dict, metric_dict: dict):
-        run_name = datetime.datetime.now().strftime('%d%h_%I_%M')
+        # run_name = datetime.datetime.now().strftime('%d%h_%I_%M')
+        run_name = 'accuracy'
         return self._writer.add_hparams(hparams, metric_dict, run_name = run_name)

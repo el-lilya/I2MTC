@@ -8,6 +8,7 @@ from tqdm import tqdm
 
 from ds.metrics import Metric
 from ds.tracking import ExperimentTracker, Stage
+from typing import List
 
 
 class Runner:
@@ -15,6 +16,7 @@ class Runner:
         self,
         loader: DataLoader[Any],
         model: torch.nn.Module,
+        device,
         optimizer: Optional[torch.optim.Optimizer] = None,
     ) -> None:
         self.run_count = 0
@@ -24,10 +26,11 @@ class Runner:
         self.optimizer = optimizer
         # Objective (loss) function
         self.compute_loss = torch.nn.CrossEntropyLoss(reduction="mean")
-        self.y_true_batches: list[list[Any]] = []
-        self.y_pred_batches: list[list[Any]] = []
+        self.y_true_batches: List[List[Any]] = []
+        self.y_pred_batches: List[List[Any]] = []
         # Assume Stage based on presence of optimizer
         self.stage = Stage.VAL if optimizer is None else Stage.TRAIN
+        self.device = device
 
     @property
     def avg_accuracy(self):
@@ -37,7 +40,7 @@ class Runner:
         self.model.train(self.stage is Stage.TRAIN)
 
         for x, y in tqdm(self.loader, desc=desc, ncols=80):
-            loss, batch_accuracy = self._run_single(x, y)
+            loss, batch_accuracy = self._run_single(x.to(self.device), y.to(self.device))
 
             experiment.add_batch_metric("accuracy", batch_accuracy, self.run_count)
 
@@ -54,8 +57,8 @@ class Runner:
         loss = self.compute_loss(prediction, y)
 
         # Compute Batch Validation Metrics
-        y_np = y.detach().numpy()
-        y_prediction_np = np.argmax(prediction.detach().numpy(), axis=1)
+        y_np = y.cpu().detach().numpy()
+        y_prediction_np = np.argmax(prediction.cpu().detach().numpy(), axis=1)
         batch_accuracy: float = accuracy_score(y_np, y_prediction_np)
         self.accuracy_metric.update(batch_accuracy, batch_size)
 

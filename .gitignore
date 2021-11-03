@@ -1,7 +1,7 @@
 # ignore images
 *.jpeg
 /runs/
-/splits/
+*.csv
 /.ipynb_checkpoints/
 /.idea/
 /colab/

@@ -1,10 +1,10 @@
 # ignore images
 *.jpeg
 /runs/
-*.csv
+#*.csv
 /.ipynb_checkpoints/
 /.idea/
 /colab/
-/simple_check.py
+#/get_results_csv.py
 /venv/
 /ds/__pycache__/

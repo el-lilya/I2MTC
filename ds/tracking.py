@@ -31,3 +31,7 @@ class ExperimentTracker(Protocol):
         """Implements logging a confusion matrix at epoch-level."""
     def add_hparams(self, hparams: dict, metric_dict: dict):
         """Adds a set of hyperparameters to be compared in TensorBoard."""
+    def add_image(self, tag, img_tensor, global_step=None, walltime=None, dataformats='CHW'):
+        """Add image data to summary."""
+    def add_figure(self, tag, figure, global_step=None, close=True, walltime=None):
+        """Render matplotlib figure into an image and add it to summary."""

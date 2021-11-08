@@ -28,6 +28,7 @@ class Runner:
         self.compute_loss = torch.nn.CrossEntropyLoss(reduction="mean")
         self.y_true_batches: List[List[Any]] = []
         self.y_pred_batches: List[List[Any]] = []
+        self.idxs: List[List[Any]] = []
         # Assume Stage based on presence of optimizer
         self.stage = Stage.VAL if optimizer is None else Stage.TRAIN
         self.device = device
@@ -39,9 +40,9 @@ class Runner:
     def run(self, desc: str, experiment: ExperimentTracker):
         self.model.train(self.stage is Stage.TRAIN)
 
-        for x, y in tqdm(self.loader, desc=desc, ncols=80):
+        for x, y, idx in tqdm(self.loader, desc=desc, ncols=80):
             loss, batch_accuracy = self._run_single(x.to(self.device), y.to(self.device))
-
+            self.idxs += [idx.numpy()]
             experiment.add_batch_metric("accuracy", batch_accuracy, self.run_count)
 
             if self.optimizer:

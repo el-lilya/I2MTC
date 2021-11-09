@@ -9,7 +9,6 @@ from ds.tensorboard import TensorboardExperiment
 from ds.load_data import get_data, train_test_split, get_transforms
 from ds.dataset import create_data_loader
 import datetime
-import os
 
 
 # Hyperparameters
@@ -25,18 +24,20 @@ data_dir = "data/classification_20_clean"
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 baseline_name = 'resnet50'
 
-# experiment settings
-# EPOCH_COUNT = 10
-# kk = range(1, 6)
-# number_of_exp = 5
+# # experiment settings
+EPOCH_COUNT = 10
+kk = range(1, 6)
+number_of_exp = 5
 
-EPOCH_COUNT = 1
-kk = range(1, 2)
-number_of_exp = 1
+# # for tests
+# EPOCH_COUNT = 2
+# kk = range(1, 3)
+# number_of_exp = 1
 
 
 def main():
     df, num_classes = get_data(root, data_dir)
+
     predictions = pd.DataFrame()
 
     for k in kk:
@@ -49,10 +50,10 @@ def main():
             train, test = train_test_split(df, k, experiment)
             train.to_csv(f'./splits/train_k{k}_#{experiment}')
             transforms = get_transforms()
-            train_loader = create_data_loader(annotations_file=train, root=root, transform=transforms['train'],
-                                              batch_size=batch_size_train)
-            test_loader = create_data_loader(annotations_file=test, root=root, transform=transforms['test'],
-                                             batch_size=batch_size_test)
+            train_loader = create_data_loader(annotations_file=train, root=root, data_dir=data_dir,
+                                              transform=transforms['train'], batch_size=batch_size_train)
+            test_loader = create_data_loader(annotations_file=test, root=root, data_dir=data_dir,
+                                             transform=transforms['test'], batch_size=batch_size_test)
 
             # Model and Optimizer
             model = ModelBaseline(baseline_name, num_classes)
@@ -87,12 +88,14 @@ def main():
             tracker.add_hparams({'k': k, '#_of_exp': experiment, 'epochs': EPOCH_COUNT},
                                 {'train_accuracy': train_runner.avg_accuracy,
                                  'test_accuracy': test_runner.avg_accuracy})
+            # print(np.concatenate(test_runner.idxs).shape, np.concatenate(test_runner.y_true_batches).shape,
+            #       np.concatenate(test_runner.y_pred_batches).shape)
             predictions_exp = pd.DataFrame({'k': k, 'experiment': experiment,
                                             'path': np.concatenate(test_runner.idxs),
                                             'label': np.concatenate(test_runner.y_true_batches),
                                             'prediction': np.concatenate(test_runner.y_pred_batches)})
             predictions_exp = predictions_exp[predictions_exp['label'] != predictions_exp['prediction']]
-            predictions_exp['path'] = predictions_exp['path'].apply(lambda x: os.path.join(root, test.iloc[x, 0]))
+            predictions_exp['path'] = predictions_exp['path'].apply(lambda x: test.iloc[x, 0])
             predictions = pd.concat([predictions, predictions_exp])
 
             torch.cuda.empty_cache()

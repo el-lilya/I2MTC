@@ -31,7 +31,8 @@ def get_data(root: str, img_dir: str):
         df_i = pd.DataFrame(
             {'img_path': [x for x in os.listdir(os.path.join(root, img_dir, label)) if x.endswith('.jpeg')],
              'label': label})
-        df_i['img_path'] = df_i['img_path'].apply(lambda x: os.path.join(img_dir, label, x))
+        df_i['img_path'] = df_i['img_path'].apply(lambda x: os.path.join(label, x))
+        # df_i['img_path'] = df_i['img_path'].apply(lambda x: os.path.join(img_dir, label, x))
         df = pd.concat([df, df_i])
     num_classes = df['label'].nunique()
     return df, num_classes

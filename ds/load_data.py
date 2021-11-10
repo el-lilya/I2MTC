@@ -35,6 +35,7 @@ def get_data(root: str, img_dir: str):
         # df_i['img_path'] = df_i['img_path'].apply(lambda x: os.path.join(img_dir, label, x))
         df = pd.concat([df, df_i])
     num_classes = df['label'].nunique()
+    df.reset_index(inplace=True)
     return df, num_classes
 
 
@@ -42,10 +43,9 @@ def train_test_split(df: pd.DataFrame, k: int, num_of_exp: int):
     num_classes = df.label.nunique()
     train = stratified_sample_df(df, 'label', k, num_of_exp)
     # indices = list(map(int, train.index))
-    test = df.loc[[x for x in df.index if x not in train.index]]
-    test = stratified_sample_df(test, 'label', 20)
+    test = df.iloc[[x for x in df.index if x not in train.index]]
     if not torch.cuda.is_available():
-        test = test.sample(k * num_classes, random_state=42)  # for cpu to train faster
+        test = stratified_sample_df(test, 'label', 4)  # for cpu to train faster
     train.reset_index(drop=True, inplace=True)
     test.reset_index(drop=True, inplace=True)
     return train, test
@@ -54,7 +54,7 @@ def train_test_split(df: pd.DataFrame, k: int, num_of_exp: int):
 def stratified_sample_df(df: pd.DataFrame, col: str, n_samples, random_state: int = 42):
     n = min(n_samples, df[col].value_counts().min())
     if n < n_samples:
-        print('Too big K')
+        print(f'Too big k. Used {n} samples instead {n_samples} for sampling test.')
     df_ = df.groupby(col).apply(lambda x: x.sample(n, random_state=random_state))
     df_.index = df_.index.droplevel(0)
     return df_

@@ -25,30 +25,34 @@ device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 baseline_name = 'resnet50'
 
 # # experiment settings
-EPOCH_COUNT = 10
-kk = range(1, 6)
-number_of_exp = 5
+# EPOCH_COUNT = 10
+# kk = range(1, 6)
+# number_of_exp = 5
 
-# # for tests
-# EPOCH_COUNT = 2
-# kk = range(1, 3)
-# number_of_exp = 1
+# for tests
+EPOCH_COUNT = 1
+kk = range(1, 2)
+number_of_exp = 1
 
 
 def main():
     df, num_classes = get_data(root, data_dir)
-
     predictions = pd.DataFrame()
 
     for k in kk:
+        print(f'k={k}')
+        print('*'*10)
         for experiment in range(number_of_exp):
+            print(f'#experiment={k}')
+            print('-' * 10)
             # Setup the experiment tracker
             name_time = datetime.datetime.now().strftime('%d%h_%I_%M')
             tracker = TensorboardExperiment(log_path=LOG_PATH + '/' + f'k={k}_exp#{experiment}/{name_time}')
 
             # Create the data loaders
             train, test = train_test_split(df, k, experiment)
-            train.to_csv(f'./splits/train_k{k}_#{experiment}')
+            train.to_csv(f'./splits/train_k{k}_#{experiment}', index=False)
+            test.to_csv(f'./splits/test_k{k}_#{experiment}', index=False)
             transforms = get_transforms()
             train_loader = create_data_loader(annotations_file=train, root=root, data_dir=data_dir,
                                               transform=transforms['train'], batch_size=batch_size_train)
@@ -95,12 +99,13 @@ def main():
                                             'label': np.concatenate(test_runner.y_true_batches),
                                             'prediction': np.concatenate(test_runner.y_pred_batches)})
             predictions_exp = predictions_exp[predictions_exp['label'] != predictions_exp['prediction']]
-            predictions_exp['path'] = predictions_exp['path'].apply(lambda x: test.iloc[x, 0])
+            predictions_exp['path'] = predictions_exp['path'].apply(lambda x: test.iloc[x, 1])
             predictions = pd.concat([predictions, predictions_exp])
+            # print(predictions.head())
 
             torch.cuda.empty_cache()
 
-    predictions.to_csv('results/predictions.csv', index=False)
+    predictions.to_csv('results/false_predictions.csv', index=False)
 
 
 if __name__ == "__main__":

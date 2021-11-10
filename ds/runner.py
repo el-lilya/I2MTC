@@ -40,8 +40,8 @@ class Runner:
     def run(self, desc: str, experiment: ExperimentTracker):
         self.model.train(self.stage is Stage.TRAIN)
 
-        # for x, y, idx in tqdm(self.loader, desc=desc, ncols=80):
-        for x, y, idx in self.loader:
+        for x, y, idx in tqdm(self.loader, desc=desc, ncols=80):
+        # for x, y, idx in self.loader:
             loss, batch_accuracy = self._run_single(x.to(self.device), y.to(self.device))
             self.idxs += [idx.numpy()]
             experiment.add_batch_metric("accuracy", batch_accuracy, self.run_count)

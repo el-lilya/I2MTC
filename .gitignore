@@ -6,6 +6,6 @@
 /.ipynb_checkpoints/
 /.idea/
 /colab/
-#/get_results_csv.py
+#/get_results.py
 /venv/
 /ds/__pycache__/

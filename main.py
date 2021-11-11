@@ -24,15 +24,15 @@ data_dir = "data/classification_20_clean"
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 baseline_name = 'resnet50'
 
-# # experiment settings
-# EPOCH_COUNT = 10
-# kk = range(1, 6)
-# number_of_exp = 5
+# experiment settings
+EPOCH_COUNT = 10
+kk = range(1, 8)
+number_of_exp = 5
 
-# for tests
-EPOCH_COUNT = 1
-kk = range(1, 2)
-number_of_exp = 1
+# # for tests
+# EPOCH_COUNT = 1
+# kk = range(1, 2)
+# number_of_exp = 1
 
 
 def main():
@@ -40,11 +40,10 @@ def main():
     predictions = pd.DataFrame()
 
     for k in kk:
-        print(f'k={k}')
-        print('*'*10)
         for experiment in range(number_of_exp):
-            print(f'#experiment={k}')
-            print('-' * 10)
+            print('*' * 10)
+            print(f'k={k}, experiment={experiment}')
+            print('*' * 10)
             # Setup the experiment tracker
             name_time = datetime.datetime.now().strftime('%d%h_%I_%M')
             tracker = TensorboardExperiment(log_path=LOG_PATH + '/' + f'k={k}_exp#{experiment}/{name_time}')
@@ -84,7 +83,7 @@ def main():
                         f"Train Accuracy: {train_runner.avg_accuracy: 0.4f}",
                     ]
                 )
-                print("\n" + summary + "\n")
+                print(summary)
 
                 # Flush the tracker after every epoch for live updates
                 tracker.flush()

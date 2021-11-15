@@ -60,10 +60,10 @@ def plot_train_images(k: int, exp: int, labels, log_dir='../runs',
 def get_mean_std_acc(name: str, name_csv: str, log_dir='../runs'):
     results_full = pd.read_csv(name)
     results = pd.DataFrame({'k': results_full['k'].unique()})
-    dict_mean = results_full.groupby('k')['test_accuracy'].mean().to_dict()
-    dict_std = results_full.groupby('k')['test_accuracy'].std().to_dict()
-    results['mean'] = results['k'].map(dict_mean)
-    results['std'] = results['k'].map(dict_std)
+    dict_mean_acc = results_full.groupby('k')['test_accuracy'].mean().to_dict()
+    dict_std_acc = results_full.groupby('k')['test_accuracy'].std().to_dict()
+    results['mean_acc'] = results['k'].map(dict_mean_acc)
+    results['std_acc'] = results['k'].map(dict_std_acc)
     # print(results)
     results.to_csv(name_csv)
 
@@ -71,7 +71,9 @@ def get_mean_std_acc(name: str, name_csv: str, log_dir='../runs'):
     name_time = datetime.datetime.now().strftime('%d%h_%I_%M')
     tracker = TensorboardExperiment(log_path=log_dir + f'/accuracy/max_k={max_k}/{name_time}')
     fig = plt.figure(figsize=(8, 6))
-    plt.plot(results['k'], results['mean'])
+    plt.plot(results['k'], results['mean_acc'])
+    plt.fill_between(results['k'], (results['mean_acc'] - results['std_acc']),
+                     (results['mean_acc'] + results['std_acc']), color='blue', alpha=0.1)
     plt.title('Mean accuracy')
     plt.xlabel('k')
     plt.ylabel('Mean accuracy')

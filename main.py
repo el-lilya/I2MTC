@@ -24,15 +24,15 @@ data_dir = "data/classification_20_clean"
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 baseline_name = 'resnet50'
 
-# experiment settings
-EPOCH_COUNT = 10
-kk = range(1, 8)
-number_of_exp = 5
+# # experiment settings
+# EPOCH_COUNT = 15
+# kk = range(1, 8)
+# number_of_exp = 5
 
-# # for tests
-# EPOCH_COUNT = 1
-# kk = range(1, 2)
-# number_of_exp = 1
+# for tests
+EPOCH_COUNT = 2
+kk = range(1, 2)
+number_of_exp = 1
 
 
 def main():
@@ -90,7 +90,10 @@ def main():
 
             tracker.add_hparams({'k': k, '#_of_exp': experiment, 'epochs': EPOCH_COUNT},
                                 {'train_accuracy': train_runner.avg_accuracy,
-                                 'test_accuracy': test_runner.avg_accuracy})
+                                 'test_accuracy': test_runner.avg_accuracy,
+                                 'train_f1_score': train_runner.f1_score_metric,
+                                 'test_f1_score': test_runner.f1_score_metric
+                                 })
             # print(np.concatenate(test_runner.idxs).shape, np.concatenate(test_runner.y_true_batches).shape,
             #       np.concatenate(test_runner.y_pred_batches).shape)
             predictions_exp = pd.DataFrame({'k': k, 'experiment': experiment,

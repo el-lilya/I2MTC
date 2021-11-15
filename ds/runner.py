@@ -2,7 +2,7 @@ from typing import Any, Optional
 
 import numpy as np
 import torch
-from sklearn.metrics import accuracy_score
+from sklearn.metrics import accuracy_score, f1_score
 from torch.utils.data.dataloader import DataLoader
 from tqdm import tqdm
 
@@ -13,15 +13,16 @@ from typing import List
 
 class Runner:
     def __init__(
-        self,
-        loader: DataLoader[Any],
-        model: torch.nn.Module,
-        device,
-        optimizer: Optional[torch.optim.Optimizer] = None,
+            self,
+            loader: DataLoader[Any],
+            model: torch.nn.Module,
+            device,
+            optimizer: Optional[torch.optim.Optimizer] = None,
     ) -> None:
         self.run_count = 0
         self.loader = loader
         self.accuracy_metric = Metric()
+        self.f1_score_metric = 0
         self.model = model
         self.optimizer = optimizer
         # Objective (loss) function
@@ -76,24 +77,32 @@ class Runner:
 
 
 def run_epoch(
-    test_runner: Runner,
-    train_runner: Runner,
-    experiment: ExperimentTracker,
-    epoch_id: int,
+        test_runner: Runner,
+        train_runner: Runner,
+        experiment: ExperimentTracker,
+        epoch_id: int,
 ):
     # Training Loop
     experiment.set_stage(Stage.TRAIN)
     train_runner.run("Train Batches", experiment)
 
+    train_runner.f1_score_metric = f1_score(np.concatenate(train_runner.y_true_batches),
+                                            np.concatenate(train_runner.y_pred_batches),
+                                            average='macro')  # or 'weighted'
     # Log Training Epoch Metrics
     experiment.add_epoch_metric("accuracy", train_runner.avg_accuracy, epoch_id)
+    experiment.add_epoch_metric("f1-score", train_runner.f1_score_metric, epoch_id)
 
     # Testing Loop
     experiment.set_stage(Stage.VAL)
     test_runner.run("Validation Batches", experiment)
 
+    test_runner.f1_score_metric = f1_score(np.concatenate(test_runner.y_true_batches),
+                                           np.concatenate(test_runner.y_pred_batches),
+                                           average='macro')  # or 'weighted'
     # Log Validation Epoch Metrics
     experiment.add_epoch_metric("accuracy", test_runner.avg_accuracy, epoch_id)
+    experiment.add_epoch_metric("f1-score", test_runner.f1_score_metric, epoch_id)
     experiment.add_epoch_confusion_matrix(
         test_runner.y_true_batches, test_runner.y_pred_batches, epoch_id
     )

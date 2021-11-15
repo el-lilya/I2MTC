@@ -2,7 +2,8 @@ import torch
 import os
 import pandas as pd
 from torchvision import transforms
-
+import shutil
+import random
 
 IMAGE_SIZE = 224
 
@@ -59,4 +60,74 @@ def stratified_sample_df(df: pd.DataFrame, col: str, n_samples, random_state: in
     df_.index = df_.index.droplevel(0)
     return df_
 
+
+def choose_from_inaturalist(root: str = '.',
+                            old_data_dir: str = 'data/train_mini',
+                            new_data_dir: str = 'data/sim2arctic',
+                            class_size: int = 50):
+    # family_genus_species
+    botanic_names = {'empty_slot': 'No_plant',
+                     'pepper': 'Solanaceae_Capsicum_',
+                     'tomato': 'Solanaceae_Solanum_lycopersicum',
+                     'kohlrabi': 'Brassicaceae_Brassica_',  # not really similar to arctic one
+                     'frisee': 'Asteraceae_Lactuca_',  # wild, need Lactuca_sativa
+                     'lactúca_1': 'Asteraceae_Lactuca_',
+                     'lactúca_2': 'Asteraceae_Lactuca_',
+                     'lettuce_oakleaf': 'Asteraceae_Lactuca_',
+                     'radish': 'Brassicaceae_Raphanus_raphanistrum',
+                     'basil_1': 'Lamiaceae_Perilla',  # family, no genus
+                     'basil_2': 'Lamiaceae_Perilla',  # family, no genus
+                     'cilantro': 'Apiaceae_Daucus',  # family, no genus
+                     'cress_1': 'Brassicaceae_Lepidium_',
+                     'cress_2': 'Brassicaceae_Lepidium_',
+                     'mint': 'Lamiaceae_Lamium_',
+                     'chard': 'Amaranthaceae_Beta_vulgaris',  # like beetroot
+                     'brassica': 'Brassicaceae_Brassica_',  # cabbage
+                     'lettuce_endivia': 'Asteraceae_Lactuca_',
+                     'chives': 'Amaryllidaceae_Allium_schoenoprasum',  # garlic, with flowers often
+                     'parsley': 'Apiaceae_Osmorhiza'  # family, no genus
+                     }
+
+    arctic_names2labels = {'empty_slot': 0,
+                           'pepper': 1,
+                           'tomato': 2,
+                           'kohlrabi': 3,
+                           'frisee': 4,
+                           'lactúca_1': 5,
+                           'lactúca_2': 6,
+                           'lettuce_oakleaf': 7,
+                           'radish': 8,
+                           'basil_1': 9,
+                           'cilantro': 10,
+                           'cress_1': 11,
+                           'mint': 12,
+                           'chard': 13,
+                           'brassica': 14,
+                           'lettuce_endivia': 15,
+                           'cress_2': 16,
+                           'chives': 17,
+                           'basil_2': 18,
+                           'parsley': 19
+                           }
+    # choose folders with plants
+    old_root = os.path.join(root, old_data_dir)
+    new_root = os.path.join(root, 'data/plants')
+    for folder in os.listdir(old_root):
+        if '_Plantae_' in folder:
+            shutil.move(os.path.join(old_root, folder), os.path.join(new_root, folder))
+
+    # create folder with desired labels ...
+    random.seed(0)
+    for cat in botanic_names.keys():
+        dest_fpath = os.path.join(root, new_data_dir, str(arctic_names2labels[cat]))
+        os.makedirs(dest_fpath, exist_ok=True)
+        for folder in os.listdir(new_root):
+            if botanic_names[cat] in folder:
+                for filename in os.listdir(os.path.join(new_root, folder)):
+                    src_fpath = os.path.join(new_root, folder, filename)
+                    shutil.copy(src_fpath, dest_fpath)
+        # ... and balanced sizes of classes
+        files = os.listdir(dest_fpath)
+        files_rm = random.sample(files, max(0, len(files) - class_size))
+        _ = [os.remove(os.path.join(dest_fpath, file)) for file in files_rm]
 

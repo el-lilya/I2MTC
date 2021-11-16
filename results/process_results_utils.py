@@ -57,29 +57,30 @@ def plot_train_images(k: int, exp: int, labels, log_dir='../runs',
     tracker.flush()
 
 
-def get_mean_std_acc(name: str, name_csv: str, log_dir='../runs'):
+def get_mean_std_metric(name: str, name_output: str, log_dir='../runs'):
+    metric_types = ['accuracy', 'f1_score']
     results_full = pd.read_csv(name)
     results = pd.DataFrame({'k': results_full['k'].unique()})
-    dict_mean_acc = results_full.groupby('k')['test_accuracy'].mean().to_dict()
-    dict_std_acc = results_full.groupby('k')['test_accuracy'].std().to_dict()
-    results['mean_acc'] = results['k'].map(dict_mean_acc)
-    results['std_acc'] = results['k'].map(dict_std_acc)
-    # print(results)
-    results.to_csv(name_csv)
-
-    max_k = results['k'].max()
-    name_time = datetime.datetime.now().strftime('%d%h_%I_%M')
-    tracker = TensorboardExperiment(log_path=log_dir + f'/accuracy/max_k={max_k}/{name_time}')
-    fig = plt.figure(figsize=(8, 6))
-    plt.plot(results['k'], results['mean_acc'])
-    plt.fill_between(results['k'], (results['mean_acc'] - results['std_acc']),
-                     (results['mean_acc'] + results['std_acc']), color='blue', alpha=0.1)
-    plt.title('Mean accuracy')
-    plt.xlabel('k')
-    plt.ylabel('Mean accuracy')
-    plt.grid()
-    tracker.add_figure(f'ACCURACY', fig)
-    tracker.flush()
+    for metric in metric_types:
+        dict_mean_metric = results_full.groupby('k')[f'test_{metric}'].mean().to_dict()
+        dict_std_metric = results_full.groupby('k')[f'test_{metric}'].std().to_dict()
+        results[f'mean_{metric}'] = results['k'].map(dict_mean_metric)
+        results[f'std_{metric}'] = results['k'].map(dict_std_metric)
+        # print(results)
+        max_k = results['k'].max()
+        name_time = datetime.datetime.now().strftime('%d%h_%I_%M')
+        tracker = TensorboardExperiment(log_path= f'{log_dir}/metrics/{metric}/max_k={max_k}/{name_time}')
+        fig = plt.figure(figsize=(8, 6))
+        plt.plot(results['k'], results[f'mean_{metric}'])
+        plt.fill_between(results['k'], (results[f'mean_{metric}'] - results[f'std_{metric}']),
+                         (results[f'mean_{metric}'] + results[f'std_{metric}']), color='blue', alpha=0.1)
+        plt.title(f'Mean {metric}')
+        plt.xlabel('k')
+        plt.ylabel(f'{metric}')
+        plt.grid()
+        tracker.add_figure(f'{metric.upper()}', fig)
+        tracker.flush()
+    results.to_csv(name_output)
 
 
 def main():

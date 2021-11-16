@@ -24,15 +24,15 @@ data_dir = "data/classification_20_clean"
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 baseline_name = 'resnet50'
 
-# # experiment settings
-# EPOCH_COUNT = 15
-# kk = range(1, 8)
-# number_of_exp = 5
+# experiment settings
+EPOCH_COUNT = 15
+kk = range(1, 8)
+number_of_exp = 5
 
-# for tests
-EPOCH_COUNT = 2
-kk = range(1, 2)
-number_of_exp = 1
+# # for tests
+# EPOCH_COUNT = 2
+# kk = range(1, 2)
+# number_of_exp = 1
 
 
 def main():
@@ -46,7 +46,7 @@ def main():
             print('*' * 10)
             # Setup the experiment tracker
             name_time = datetime.datetime.now().strftime('%d%h_%I_%M')
-            tracker = TensorboardExperiment(log_path=LOG_PATH + '/' + f'k={k}_exp#{experiment}/{name_time}')
+            tracker = TensorboardExperiment(log_path=LOG_PATH + f'/experiments/k={k}_exp#{experiment}/{name_time}')
 
             # Create the data loaders
             train, test = train_test_split(df, k, experiment)
@@ -87,7 +87,7 @@ def main():
 
                 # Flush the tracker after every epoch for live updates
                 tracker.flush()
-
+            tracker.add_epoch_confusion_matrix(test_runner.y_true_batches, test_runner.y_pred_batches, EPOCH_COUNT)
             tracker.add_hparams({'k': k, '#_of_exp': experiment, 'epochs': EPOCH_COUNT},
                                 {'train_accuracy': train_runner.avg_accuracy,
                                  'test_accuracy': test_runner.avg_accuracy,

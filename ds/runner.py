@@ -103,6 +103,4 @@ def run_epoch(
     # Log Validation Epoch Metrics
     experiment.add_epoch_metric("accuracy", test_runner.avg_accuracy, epoch_id)
     experiment.add_epoch_metric("f1-score", test_runner.f1_score_metric, epoch_id)
-    experiment.add_epoch_confusion_matrix(
-        test_runner.y_true_batches, test_runner.y_pred_batches, epoch_id
-    )
+

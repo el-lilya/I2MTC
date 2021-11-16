@@ -61,10 +61,10 @@ def stratified_sample_df(df: pd.DataFrame, col: str, n_samples, random_state: in
     return df_
 
 
-def choose_from_inaturalist(root: str = '.',
-                            old_data_dir: str = 'data/train_mini',
-                            new_data_dir: str = 'data/sim2arctic',
-                            class_size: int = 50):
+def create_folder_from_inaturalist(root: str = '.',
+                                   old_data_dir: str = 'data/train_mini',
+                                   new_data_dir: str = 'data/sim2arctic',
+                                   class_size: int = 50):
     # family_genus_species
     botanic_names = {'empty_slot': 'No_plant',
                      'pepper': 'Solanaceae_Capsicum_',
@@ -130,4 +130,3 @@ def choose_from_inaturalist(root: str = '.',
         files = os.listdir(dest_fpath)
         files_rm = random.sample(files, max(0, len(files) - class_size))
         _ = [os.remove(os.path.join(dest_fpath, file)) for file in files_rm]
-

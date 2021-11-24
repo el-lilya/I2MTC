@@ -19,8 +19,8 @@ class ArcticDataset(Dataset):
         return len(self.annotations_file)
 
     def __getitem__(self, idx):
-        img_path = os.path.join(self.root, self.data_dir, self.annotations_file.iloc[idx, 1])
-        label = int(self.annotations_file.iloc[idx, 2])
+        img_path = os.path.join(self.root, self.data_dir, self.annotations_file.iloc[idx, 0])
+        label = int(self.annotations_file.iloc[idx, 1]) # it was 2 instead of 1, dropped index
         image = Image.open(img_path)
         if self.transform:
             image = self.transform(image)

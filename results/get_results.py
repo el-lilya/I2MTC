@@ -2,7 +2,7 @@ from process_results_utils import get_mean_std_metric, plot_train_images, plot_f
 
 
 def main():
-    log_dir = 'runs_gpu'
+    log_dir = 'runs_gpu_baseline'
     # get mean and std accuracy
     max_k = 7
     get_mean_std_metric(f'hparams_table_max_k={max_k}.csv', f'results_max_k={max_k}.csv', log_dir=log_dir)

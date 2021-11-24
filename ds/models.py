@@ -3,7 +3,7 @@ from torchvision import models
 import torch.nn as nn
 
 
-class ModelBaseline(torch.nn.Module):
+class Model(torch.nn.Module):
     def __init__(self, name: str, num_classes: int):
         super().__init__()
         if name == 'resnet50':

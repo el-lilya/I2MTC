@@ -8,45 +8,70 @@ import random
 IMAGE_SIZE = 224
 
 
-def get_transforms():
-    data_transforms = {
-        'train': transforms.Compose([
-            transforms.CenterCrop((800, 1000)),  # remove bottom digits in some pictures
-            transforms.RandomResizedCrop(IMAGE_SIZE),
-            transforms.RandomHorizontalFlip(),
-            transforms.ToTensor(),
-            transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
-        ]),
-        'test': transforms.Compose([
-            transforms.Resize(IMAGE_SIZE + 32),
-            transforms.CenterCrop(IMAGE_SIZE),
-            transforms.ToTensor(),
-            transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
-        ])}
+def get_transforms(stage: str = 'classify_arctic'):
+    if stage == 'classify_arctic':
+        data_transforms = {
+            'train': transforms.Compose([
+                transforms.CenterCrop((800, 1000)),  # remove bottom digits in some pictures
+                transforms.RandomResizedCrop(IMAGE_SIZE),
+                transforms.RandomHorizontalFlip(),
+                transforms.ToTensor(),
+                transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
+            ]),
+            'test': transforms.Compose([
+                transforms.Resize(IMAGE_SIZE + 32),
+                transforms.CenterCrop(IMAGE_SIZE),
+                transforms.ToTensor(),
+                transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
+            ])}
+    # TODO: add more transforms for arctic photos
+    if stage == 'pretrain':
+        data_transforms = {
+            'train': transforms.Compose([
+                transforms.RandomResizedCrop(IMAGE_SIZE),
+                transforms.ColorJitter(brightness=.1, contrast=.1, hue=.1),
+                transforms.RandomRotation((0, 180)),
+                transforms.RandomHorizontalFlip(),
+                transforms.ToTensor(),
+                transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
+            ]),
+
+            'test': transforms.Compose([
+                transforms.Resize((IMAGE_SIZE, IMAGE_SIZE)),
+                transforms.ToTensor(),
+                transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
+            ])}
+    else:
+        print(f'Stage {stage} is not defined')
+        data_transforms = None
+    inv_normalize = transforms.Normalize(
+        mean=[-0.485 / 0.229, -0.456 / 0.224, -0.406 / 0.225],
+        std=[1 / 0.229, 1 / 0.224, 1 / 0.225]
+    )
     return data_transforms
 
 
-def get_data(root: str, img_dir: str):
+def get_data(root: str, img_dir: str, img_format: str = '.jpeg'):
     df = pd.DataFrame()
     for label in os.listdir(os.path.join(root, img_dir)):
         df_i = pd.DataFrame(
-            {'img_path': [x for x in os.listdir(os.path.join(root, img_dir, label)) if x.endswith('.jpeg')],
+            {'img_path': [x for x in os.listdir(os.path.join(root, img_dir, label)) if x.endswith(img_format)],
              'label': label})
         df_i['img_path'] = df_i['img_path'].apply(lambda x: os.path.join(label, x))
         # df_i['img_path'] = df_i['img_path'].apply(lambda x: os.path.join(img_dir, label, x))
         df = pd.concat([df, df_i])
-    num_classes = df['label'].nunique()
-    df.reset_index(inplace=True)
+    # num_classes = df['label'].nunique()
+    num_classes = len(os.listdir(os.path.join(root, img_dir)))
+    df.reset_index(drop=True, inplace=True)
     return df, num_classes
 
 
-def train_test_split(df: pd.DataFrame, k: int, num_of_exp: int):
-    num_classes = df.label.nunique()
+def train_test_split_k_shot(df: pd.DataFrame, k: int, num_of_exp: int, test_imgs_per_class_cpu: int = 4):
     train = stratified_sample_df(df, 'label', k, num_of_exp)
     # indices = list(map(int, train.index))
     test = df.iloc[[x for x in df.index if x not in train.index]]
     if not torch.cuda.is_available():
-        test = stratified_sample_df(test, 'label', 4)  # for cpu to train faster
+        test = stratified_sample_df(test, 'label', test_imgs_per_class_cpu)  # for cpu to train faster
     train.reset_index(drop=True, inplace=True)
     test.reset_index(drop=True, inplace=True)
     return train, test
@@ -61,7 +86,7 @@ def stratified_sample_df(df: pd.DataFrame, col: str, n_samples, random_state: in
     return df_
 
 
-def create_folder_from_inaturalist(root: str = '.',
+def create_sim2arctic_from_inaturalist(root: str = '.',
                                    old_data_dir: str = 'data/train_mini',
                                    new_data_dir: str = 'data/sim2arctic',
                                    class_size: int = 50):

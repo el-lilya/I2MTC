@@ -48,7 +48,7 @@ class TensorboardExperiment:
     def add_epoch_confusion_matrix(
         self, y_true: List[np.array], y_pred: List[np.array], step: int
     ):
-        y_true, y_pred = self.collapse_batches(y_true, y_pred)
+        # y_true, y_pred = self.collapse_batches(y_true, y_pred)
         fig = self.create_confusion_matrix(y_true, y_pred, step)
         tag = f"{self.stage.name}/epoch/confusion_matrix"
         self._writer.add_figure(tag, fig, step)

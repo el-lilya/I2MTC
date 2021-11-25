@@ -7,9 +7,16 @@ class Model(torch.nn.Module):
     def __init__(self, name: str, num_classes: int):
         super().__init__()
         if name == 'resnet50':
-            self.model = models.resnet50(pretrained=True)
-            num_ftrs = self.model.fc.in_features
-            self.model.fc = nn.Linear(num_ftrs, num_classes)
+            model_ft = models.resnet50(pretrained=True)
+            ct = 0
+            for child in model_ft.children():
+                ct += 1
+            if ct < 7:
+                for param in child.parameters():
+                    param.requires_grad = False
+            num_ftrs = model_ft.fc.in_features
+            model_ft.fc = nn.Linear(num_ftrs, num_classes)
+            self.model = model_ft
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         return self.model(x)

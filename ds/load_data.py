@@ -8,13 +8,15 @@ import random
 IMAGE_SIZE = 224
 
 
-def get_transforms(stage: str = 'classify_arctic'):
-    if stage == 'classify_arctic':
+def get_transforms(dataset: str = 'arctic'):
+    if dataset == 'arctic':
         data_transforms = {
             'train': transforms.Compose([
                 transforms.CenterCrop((800, 1000)),  # remove bottom digits in some pictures
                 transforms.RandomResizedCrop(IMAGE_SIZE),
+                transforms.ColorJitter(brightness=.2, contrast=.2, hue=0),
                 transforms.RandomHorizontalFlip(),
+                # transforms.RandomRotation((0, 20)),
                 transforms.ToTensor(),
                 transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
             ]),
@@ -25,11 +27,11 @@ def get_transforms(stage: str = 'classify_arctic'):
                 transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
             ])}
     # TODO: add more transforms for arctic photos
-    if stage == 'pretrain':
+    elif dataset == 'iNaturalist':
         data_transforms = {
             'train': transforms.Compose([
-                transforms.RandomResizedCrop(IMAGE_SIZE),
-                transforms.ColorJitter(brightness=.1, contrast=.1, hue=.1),
+                transforms.RandomResizedCrop(IMAGE_SIZE, scale=(0.1, 1.0)),
+                transforms.ColorJitter(brightness=.2, contrast=.2, hue=.05),
                 transforms.RandomRotation((0, 180)),
                 transforms.RandomHorizontalFlip(),
                 transforms.ToTensor(),
@@ -42,7 +44,7 @@ def get_transforms(stage: str = 'classify_arctic'):
                 transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
             ])}
     else:
-        print(f'Stage {stage} is not defined')
+        print(f'Stage {dataset} is not defined')
         data_transforms = None
     inv_normalize = transforms.Normalize(
         mean=[-0.485 / 0.229, -0.456 / 0.224, -0.406 / 0.225],
@@ -91,24 +93,21 @@ def create_sim2arctic_from_inaturalist(root: str = '.',
                                    new_data_dir: str = 'data/sim2arctic',
                                    class_size: int = 50):
     # family_genus_species
-    botanic_names = {'empty_slot': 'No_plant',
+    botanic_names = {'empty_slot': '__No_plant__',
                      'pepper': 'Solanaceae_Capsicum_',
                      'tomato': 'Solanaceae_Solanum_lycopersicum',
                      'kohlrabi': 'Brassicaceae_Brassica_',  # not really similar to arctic one
                      'frisee': 'Asteraceae_Lactuca_',  # wild, need Lactuca_sativa
-                     'lactúca_1': 'Asteraceae_Lactuca_',
-                     'lactúca_2': 'Asteraceae_Lactuca_',
-                     'lettuce_oakleaf': 'Asteraceae_Lactuca_',
+                     'lactúca': '__Repeats__', # 'Asteraceae_Lactuca_'
+                     'lettuce_oakleaf': '__Repeats__', # 'Asteraceae_Lactuca_'
                      'radish': 'Brassicaceae_Raphanus_raphanistrum',
-                     'basil_1': 'Lamiaceae_Perilla',  # family, no genus
-                     'basil_2': 'Lamiaceae_Perilla',  # family, no genus
+                     'basil': 'Lamiaceae_Perilla',  # family, no genus
                      'cilantro': 'Apiaceae_Daucus',  # family, no genus
-                     'cress_1': 'Brassicaceae_Lepidium_',
-                     'cress_2': 'Brassicaceae_Lepidium_',
+                     'cress': 'Brassicaceae_Lepidium_',
                      'mint': 'Lamiaceae_Lamium_',
                      'chard': 'Amaranthaceae_Beta_vulgaris',  # like beetroot
                      'brassica': 'Brassicaceae_Brassica_',  # cabbage
-                     'lettuce_endivia': 'Asteraceae_Lactuca_',
+                     'lettuce_endivia': '__Repeats__', # 'Asteraceae_Lactuca_'
                      'chives': 'Amaryllidaceae_Allium_schoenoprasum',  # garlic, with flowers often
                      'parsley': 'Apiaceae_Osmorhiza'  # family, no genus
                      }
@@ -118,21 +117,21 @@ def create_sim2arctic_from_inaturalist(root: str = '.',
                            'tomato': 2,
                            'kohlrabi': 3,
                            'frisee': 4,
-                           'lactúca_1': 5,
-                           'lactúca_2': 6,
+                           'lactúca': 5,
+                           'mint': 6,
                            'lettuce_oakleaf': 7,
                            'radish': 8,
-                           'basil_1': 9,
+                           'basil': 9,
                            'cilantro': 10,
-                           'cress_1': 11,
-                           'mint': 12,
-                           'chard': 13,
-                           'brassica': 14,
-                           'lettuce_endivia': 15,
-                           'cress_2': 16,
-                           'chives': 17,
-                           'basil_2': 18,
-                           'parsley': 19
+                           'cress': 11,
+                           'chard': 12,
+                           'brassica': 13,
+                           'lettuce_endivia': 14,
+                           'parsley': 15,
+                           'chives': 16,
+                           # 'basil_2': 17,
+                           # 'cilantro': 18,
+                           # 'lactúca_2': 19
                            }
     # choose folders with plants
     old_root = os.path.join(root, old_data_dir)

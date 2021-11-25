@@ -9,7 +9,9 @@ from ds.tensorboard import TensorboardExperiment
 from ds.load_data import get_data, train_test_split_k_shot, get_transforms
 from ds.dataset import create_data_loader
 import datetime
-
+from matplotlib import pyplot as plt
+import torchvision
+from torchvision import transforms as T
 
 LOG_PATH = "./runs"
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -17,20 +19,21 @@ device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 # Data configuration
 # root = '/content/drive/MyDrive/I2MTC' # for colab
 root = '.'
-data_dir = "data/classification_20_clean"
+data_dir = "data/classification_17_clean"
 model_name = 'resnet50'
 
-stage = 'classify_arctic'
+stage = 'check_pretrain'
+dataset = 'arctic'
 
 # Hyperparameters
-LR = 1e-4  # 5e-5
-batch_size_train = 8
+LR = 1e-5  # 5e-5
+batch_size_train = 16
 batch_size_test = 16
 
 # experiment settings
 EPOCH_COUNT = 15
-kk = range(1, 8)
-number_of_exp = 5
+kk = range(2, 3)
+number_of_exp = 1
 
 # # for tests
 # EPOCH_COUNT = 2
@@ -50,32 +53,53 @@ def main():
             print('*' * 10)
             # Setup the experiment tracker
             name_time = datetime.datetime.now().strftime('%d%h_%I_%M')
-            tracker = TensorboardExperiment(log_path=LOG_PATH + f'/experiments/k={k}_exp#{experiment}/{name_time}')
+            tracker = TensorboardExperiment(log_path= f'{LOG_PATH}/{stage}/experiments/k={k}_exp#{experiment}_lr={LR}/{name_time}')
 
             # Create the data loaders
             train, test = train_test_split_k_shot(df, k, experiment)
             train.to_csv(f'./splits/train_k{k}_#{experiment}', index=False)
             test.to_csv(f'./splits/test_k{k}_#{experiment}', index=False)
-            transforms = get_transforms()
+            transform = get_transforms(dataset)
             train_loader = create_data_loader(annotations_file=train, root=root, data_dir=data_dir,
-                                              transform=transforms['train'], batch_size=batch_size_train)
+                                              transform=transform['train'], batch_size=batch_size_train)
             test_loader = create_data_loader(annotations_file=test, root=root, data_dir=data_dir,
-                                             transform=transforms['test'], batch_size=batch_size_test)
+                                             transform=transform['test'], batch_size=batch_size_test)
+            inv_normalize = T.Normalize(
+                mean=[-0.485 / 0.229, -0.456 / 0.224, -0.406 / 0.225],
+                std=[1 / 0.229, 1 / 0.224, 1 / 0.225]
+            )
+            batch_tensor = next(iter(train_loader))[0]
+            grid_img = torchvision.utils.make_grid(batch_tensor, nrow=4)
+            plt.imshow(inv_normalize(grid_img).permute(1, 2, 0))
+            # plt.show()
 
             # Model and Optimizer
-            model = Model(baseline_name, num_classes)
+            model = Model(model_name, num_classes)
             model.to(device)
             optimizer = torch.optim.Adam(model.parameters(), lr=LR)
+            checkpoint = None
+            # path = f'results/pretrain/acc= {0.65}.pth'
+            path = 'results/pretrain/BBN.iNaturalist2018.res50.180epoch.best_model.pth'
+            checkpoint = torch.load(path)
+            print(checkpoint)
+            if checkpoint is None:
+                pass
+            else:
+                print(f'Load checkpoint for model and optimizer from {path}')
+                model.load_state_dict(checkpoint)
+                # optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
 
             # Create the runners
             test_runner = Runner(test_loader, model, device)
             train_runner = Runner(train_loader, model, device, optimizer)
 
+            folder_save = f'results/pretrain'
             # Run the epochs
-            train_model(test_runner, train_runner, EPOCH_COUNT, tracker)
+            train_model(test_runner, train_runner, EPOCH_COUNT, tracker, folder_save)
 
             tracker.add_epoch_confusion_matrix(test_runner.y_true_batches, test_runner.y_pred_batches, EPOCH_COUNT)
-            tracker.add_hparams({'k': k, '#_of_exp': experiment, 'epochs': EPOCH_COUNT},
+            tracker.add_hparams({'k': k, '#_of_exp': experiment, 'batch_size': batch_size_train, 'epochs': EPOCH_COUNT,
+                                 'lr': LR},
                                 {'train_accuracy': train_runner.avg_accuracy,
                                  'test_accuracy': test_runner.avg_accuracy,
                                  'train_f1_score': train_runner.f1_score_metric,
@@ -83,17 +107,17 @@ def main():
                                  })
 
             predictions_exp = pd.DataFrame({'k': k, 'experiment': experiment,
-                                            'path': np.concatenate(test_runner.idxs),
-                                            'label': np.concatenate(test_runner.y_true_batches),
-                                            'prediction': np.concatenate(test_runner.y_pred_batches)})
+                                           'path': np.concatenate(test_runner.idxs),
+                                            'label': test_runner.y_true_batches,
+                                            'prediction': test_runner.y_pred_batches})
             predictions_exp = predictions_exp[predictions_exp['label'] != predictions_exp['prediction']]
-            predictions_exp['path'] = predictions_exp['path'].apply(lambda x: test.iloc[x, 1])
+            predictions_exp['path'] = predictions_exp['path'].apply(lambda x: test.iloc[x, 0])
             predictions = pd.concat([predictions, predictions_exp])
             # print(predictions.head())
 
             torch.cuda.empty_cache()
 
-    predictions.to_csv('results/false_predictions.csv', index=False)
+    predictions.to_csv('results/false_predictions_17.csv', index=False)
 
 
 if __name__ == "__main__":

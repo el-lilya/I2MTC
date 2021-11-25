@@ -8,7 +8,7 @@ import math
 
 
 def plot_false_predictions(predictions: str, k: int, exp: int, labels, log_dir='../runs',
-                           root='..', data_dir='data/classification_20_clean'):
+                           root='..', data_dir='data/classification_17_clean'):
     name_time = datetime.datetime.now().strftime('%d%h_%I_%M')
     tracker = TensorboardExperiment(log_path=log_dir + f'/false_preds/k={k}_exp#{exp}_labels={labels}/{name_time}')
     df = pd.read_csv(predictions)

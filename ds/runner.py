@@ -24,6 +24,7 @@ class Runner:
         self.run_count = 0
         self.loader = loader
         self.accuracy_metric = Metric()
+        self.loss = Metric()
         self.f1_score_metric = 0
         self.model = model
         self.optimizer = optimizer
@@ -40,14 +41,18 @@ class Runner:
     def avg_accuracy(self):
         return self.accuracy_metric.average
 
+    @property
+    def avg_loss(self):
+        return self.loss.average
+
     def run(self, desc: str, experiment: TensorboardExperiment):
         self.model.train(self.stage is Stage.TRAIN)
 
-        for x, y, idx in tqdm(self.loader, desc=desc, ncols=80):
-            # for x, y, idx in self.loader:
+        # for x, y, idx in tqdm(self.loader, desc=desc, ncols=80):
+        for x, y, idx in self.loader:
             loss, batch_accuracy = self._run_single(x.to(self.device), y.to(self.device))
             self.idxs += [idx.numpy()]
-            experiment.add_batch_metric("accuracy", batch_accuracy, self.run_count)
+            # experiment.add_batch_metric("accuracy", batch_accuracy, self.run_count)
 
             if self.optimizer:
                 # Reverse-mode AutoDiff (backpropagation)
@@ -68,6 +73,7 @@ class Runner:
         y_prediction_np = np.argmax(prediction.cpu().detach().numpy(), axis=1)
         batch_accuracy: float = accuracy_score(y_np, y_prediction_np)
         self.accuracy_metric.update(batch_accuracy, batch_size)
+        self.loss.update(loss.item(), batch_size)
 
         self.y_true_batches += [y_np]
         self.y_pred_batches += [y_prediction_np]
@@ -75,6 +81,7 @@ class Runner:
 
     def reset(self):
         self.accuracy_metric = Metric()
+        self.loss = Metric()
         self.y_true_batches = []
         self.y_pred_batches = []
         self.idxs = []
@@ -93,7 +100,8 @@ def run_epoch(
     train_runner.f1_score_metric = f1_score(train_runner.y_true_batches,
                                             train_runner.y_pred_batches,
                                             average='macro')  # or 'weighted'
-    # Log Training Epoch Metrics
+    # Log Training Epoch Loss and Metrics
+    experiment.add_epoch_metric("loss", train_runner.avg_loss, epoch_id)
     experiment.add_epoch_metric("accuracy", train_runner.avg_accuracy, epoch_id)
     experiment.add_epoch_metric("f1-score", train_runner.f1_score_metric, epoch_id)
 
@@ -103,8 +111,9 @@ def run_epoch(
 
     test_runner.f1_score_metric = f1_score(test_runner.y_true_batches,
                                            test_runner.y_pred_batches,
-                                           average='macro')  # or 'weighted'
-    # Log Validation Epoch Metrics
+                                           average='weighted')  # or 'weighted'
+    # Log Validation Epoch Loss and Metrics
+    experiment.add_epoch_metric("loss", test_runner.avg_loss, epoch_id)
     experiment.add_epoch_metric("accuracy", test_runner.avg_accuracy, epoch_id)
     experiment.add_epoch_metric("f1-score", test_runner.f1_score_metric, epoch_id)
 
@@ -112,7 +121,8 @@ def run_epoch(
 def train_model(test_runner: Runner,
                 train_runner: Runner,
                 epochs: int,
-                tracker: TensorboardExperiment):
+                tracker: TensorboardExperiment,
+                folder_save: Optional[str] = None):
     for epoch_id in range(epochs):
         # Reset the runners
         train_runner.reset()
@@ -123,7 +133,7 @@ def train_model(test_runner: Runner,
         # Compute Average Epoch Metrics
         summary = ", ".join(
             [
-                f"[Epoch: {epoch_id + 1}/{epochs}]",
+                f"\n[Epoch: {epoch_id + 1}/{epochs}]",
                 f"Test Accuracy: {test_runner.avg_accuracy: 0.4f}",
                 f"Train Accuracy: {train_runner.avg_accuracy: 0.4f}",
             ]
@@ -131,3 +141,11 @@ def train_model(test_runner: Runner,
         print(summary)
         # Flush the tracker after every epoch for live updates
         tracker.flush()
+        torch.cuda.empty_cache()
+    # if test_runner.avg_accuracy > 0.5:
+    #     torch.save({
+    #         'epoch': epochs,
+    #         'model_state_dict': train_runner.model.state_dict(),
+    #         'optimizer_state_dict': train_runner.optimizer.state_dict(),
+    #         'loss': test_runner.avg_loss
+    #     }, f'{folder_save}/acc={test_runner.avg_accuracy: .2f}.pth')

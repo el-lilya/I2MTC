@@ -22,9 +22,8 @@ LOG_PATH = "./runs"
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 # Data configuration
-# root = '/content/drive/MyDrive/I2MTC' # for colab
 root = '.'
-data_dir = "data/sim2arctic1"
+data_dir = "data/sim2arctic"
 model_name = 'resnet50'
 
 stage = 'pretrain'
@@ -35,6 +34,10 @@ LR = 1e-4  # 5e-5
 batch_size_train = 16
 batch_size_test = 16
 
+# Colab
+# root = '/content/drive/MyDrive/I2MTC' # for colab
+# batch_size_train = 64
+# batch_size_test = 64
 # experiment settings
 EPOCH_COUNT = 1
 

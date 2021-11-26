@@ -1,5 +1,6 @@
 import torchvision
-import os
+
+from checkpoints.BBN_master.lib.net.network import Network
 
 
 def main():

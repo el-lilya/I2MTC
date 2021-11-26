@@ -19,7 +19,8 @@ class Runner:
             model: torch.nn.Module,
             device,
             optimizer: Optional[torch.optim.Optimizer] = None,
-            loss: torch.nn.modules.loss = torch.nn.CrossEntropyLoss(reduction="mean")
+            scheduler: Optional[torch.optim.lr_scheduler] = None,
+            loss: torch.nn.modules.loss = torch.nn.CrossEntropyLoss(reduction="mean"),
     ) -> None:
         self.run_count = 0
         self.loader = loader
@@ -36,6 +37,7 @@ class Runner:
         # Assume Stage based on presence of optimizer
         self.stage = Stage.VAL if optimizer is None else Stage.TRAIN
         self.device = device
+        self.scheduler = scheduler
 
     @property
     def avg_accuracy(self):
@@ -130,7 +132,7 @@ def train_model(test_runner: Runner,
         test_runner.reset()
 
         run_epoch(test_runner, train_runner, tracker, epoch_id)
-
+        train_runner.scheduler.step(test_runner.avg_loss)
         # Compute Average Epoch Metrics
         summary = ", ".join(
             [
@@ -143,6 +145,7 @@ def train_model(test_runner: Runner,
         # Flush the tracker after every epoch for live updates
         tracker.flush()
         torch.cuda.empty_cache()
+
     if test_runner.avg_accuracy > 0.5 and save_checkpoint:
         torch.save({
             'epoch': epochs,

@@ -106,7 +106,7 @@ def create_sim2arctic_from_inaturalist(root: str = '.',
                      'cress': 'Brassicaceae_Lepidium_',
                      'mint': 'Lamiaceae_Lamium_',
                      'chard': 'Amaranthaceae_Beta_vulgaris',  # like beetroot
-                     'brassica': 'Brassicaceae_Brassica_',  # cabbage
+                     'brassica': '__Repeats__',  # Brassicaceae_Brassica_
                      'lettuce_endivia': '__Repeats__', # 'Asteraceae_Lactuca_'
                      'chives': 'Amaryllidaceae_Allium_schoenoprasum',  # garlic, with flowers often
                      'parsley': 'Apiaceae_Osmorhiza'  # family, no genus

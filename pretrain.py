@@ -38,6 +38,7 @@ batch_size_test = 16
 
 # experiment settings
 EPOCH_COUNT = 50
+LOG_PATH = f"{root}/runs"
 
 # for colab
 colab = True
@@ -45,8 +46,7 @@ if colab:
     root = '/content'
     data_dir = "sim2arctic"
     root_save = '/content/drive/MyDrive/I2MTC/'
-
-LOG_PATH = f"{root}/runs"
+    LOG_PATH = f"{root_save}/runs"
 
 
 def main():
@@ -98,7 +98,7 @@ def main():
     # Run the epochs
     folder_save = f'{root}/results/pretrain'
     os.makedirs(folder_save, exist_ok=True)
-    train_model(test_runner, train_runner, EPOCH_COUNT, tracker, folder_save, save_checkpoint=True)
+    train_model(test_runner, train_runner, EPOCH_COUNT, tracker, folder_save, save_checkpoint=False)
 
     tracker.add_epoch_confusion_matrix(test_runner.y_true_batches, test_runner.y_pred_batches, EPOCH_COUNT)
     tracker.add_hparams({'batch_size': batch_size_train, 'lr': LR, 'epochs': EPOCH_COUNT, 'samples/class': samples_per_class},
@@ -109,9 +109,11 @@ def main():
                          })
 
     torch.cuda.empty_cache()
-    if colab:
-        shutil.copytree(LOG_PATH, f'{root_save}/runs', dirs_exist_ok=True)
-        shutil.copytree(folder_save, f'{root_save}/checkpoints', dirs_exist_ok=True)
+    # if colab:
+    #     print(f'Saving {LOG_PATH} to {root_save}/runs, {folder_save} to {root_save}/checkpoints...')
+    #     shutil.copytree(LOG_PATH, f'{root_save}/runs', dirs_exist_ok=True)
+    #     shutil.copytree(folder_save, f'{root_save}/checkpoints', dirs_exist_ok=True)
+    #     print('Saved!')
 
 
 if __name__ == "__main__":

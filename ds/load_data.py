@@ -32,7 +32,7 @@ def get_transforms(dataset: str = 'arctic'):
             'train': transforms.Compose([
                 transforms.RandomResizedCrop(IMAGE_SIZE, scale=(0.1, 1.0)),
                 transforms.ColorJitter(brightness=.2, contrast=.2, hue=.05),
-                transforms.RandomRotation((0, 180)),
+                transforms.RandomRotation(45),  # TODO: maybe different angle (30), cutout! (albumentation), cutmix
                 transforms.RandomHorizontalFlip(),
                 transforms.ToTensor(),
                 transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])

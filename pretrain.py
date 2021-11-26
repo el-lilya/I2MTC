@@ -16,6 +16,7 @@ import torchvision
 from torchvision import transforms
 from PIL import Image
 import os
+import shutil
 
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -39,13 +40,17 @@ batch_size_test = 16
 EPOCH_COUNT = 50
 
 # for colab
-# root = '/content/drive/MyDrive/I2MTC'
-# root = '..'
-# data_dir = f"data/sim2arctic"
+colab = True
+if colab:
+    root = '/content'
+    data_dir = "sim2arctic"
+    root_save = '/content/drive/MyDrive/I2MTC/'
+
 LOG_PATH = f"{root}/runs"
 
+
 def main():
-    create_sim2arctic_from_inaturalist(new_data_dir=data_dir, class_size=200) # use when data/sim2lcr is not created
+    # create_sim2arctic_from_inaturalist(new_data_dir=data_dir, class_size=100) # use when data/sim2lcr is not created
     df, num_classes = get_data(root, data_dir, img_format='.jpg')
     # Setup the experiment tracker
     name_time = datetime.datetime.now().strftime('%d%h_%I_%M')
@@ -104,8 +109,9 @@ def main():
                          })
 
     torch.cuda.empty_cache()
-    #
-    # predictions.to_csv('results/false_predictions.csv', index=False)
+    if colab:
+        shutil.copytree(LOG_PATH, f'{root_save}/runs', dirs_exist_ok=True)
+        shutil.copytree(folder_save, f'{root_save}/checkpoints', dirs_exist_ok=True)
 
 
 if __name__ == "__main__":

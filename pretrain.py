@@ -18,13 +18,11 @@ from PIL import Image
 import os
 
 
-LOG_PATH = "./runs"
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 # Data configuration
 root = '.'
-# root = '/content/drive/MyDrive/I2MTC' # for colab
-samples_per_class = 100
+samples_per_class = 2
 data_dir = f"data/sim2arctic_{samples_per_class}"
 model_name = 'resnet50'
 
@@ -40,9 +38,14 @@ batch_size_test = 16
 # experiment settings
 EPOCH_COUNT = 50
 
+# for colab
+# root = '/content/drive/MyDrive/I2MTC'
+# root = '..'
+# data_dir = f"data/sim2arctic"
+LOG_PATH = f"{root}/runs"
 
 def main():
-    # create_sim2arctic_from_inaturalist(new_data_dir=data_dir, class_size=200) # use when data/sim2lcr is not created
+    create_sim2arctic_from_inaturalist(new_data_dir=data_dir, class_size=200) # use when data/sim2lcr is not created
     df, num_classes = get_data(root, data_dir, img_format='.jpg')
     # Setup the experiment tracker
     name_time = datetime.datetime.now().strftime('%d%h_%I_%M')
@@ -66,15 +69,15 @@ def main():
     batch_tensor = next(iter(train_loader))[0]
     grid_img = torchvision.utils.make_grid(batch_tensor, nrow=4)
     plt.imshow(inv_normalize(grid_img).permute(1, 2, 0))
-    plt.show()
+    # plt.show()
     #
     # Model and Optimizer
     model = Model(model_name, num_classes)
     model.to(device)
     optimizer = torch.optim.Adam(model.parameters(), lr=LR)
     checkpoint = None
-    path = f'results/pretrain/acc= {0.57}.pth'
-    checkpoint = torch.load(path)
+    # path = f'results/pretrain/acc= {0.57}.pth'
+    # checkpoint = torch.load(path)
     if checkpoint is None:
         pass
     else:
@@ -88,8 +91,9 @@ def main():
     test_runner = Runner(test_loader, model, device, loss=loss)
 
     # Run the epochs
-    folder_save = f'results/pretrain'
-    train_model(test_runner, train_runner, EPOCH_COUNT, tracker, folder_save)
+    folder_save = f'{root}/results/pretrain'
+    os.makedirs(folder_save, exist_ok=True)
+    train_model(test_runner, train_runner, EPOCH_COUNT, tracker, folder_save, save_checkpoint=True)
 
     tracker.add_epoch_confusion_matrix(test_runner.y_true_batches, test_runner.y_pred_batches, EPOCH_COUNT)
     tracker.add_hparams({'batch_size': batch_size_train, 'lr': LR, 'epochs': EPOCH_COUNT, 'samples/class': samples_per_class},
@@ -99,15 +103,6 @@ def main():
                          'test_f1_score': test_runner.f1_score_metric
                          })
 
-    # predictions_exp = pd.DataFrame({'k': k, 'experiment': experiment,
-    #                                 'path': np.concatenate(test_runner.idxs),
-    #                                 'label': np.concatenate(test_runner.y_true_batches),
-    #                                 'prediction': np.concatenate(test_runner.y_pred_batches)})
-    # predictions_exp = predictions_exp[predictions_exp['label'] != predictions_exp['prediction']]
-    # predictions_exp['path'] = predictions_exp['path'].apply(lambda x: test.iloc[x, 1])
-    # predictions = pd.concat([predictions, predictions_exp])
-    # # print(predictions.head())
-    #
     torch.cuda.empty_cache()
     #
     # predictions.to_csv('results/false_predictions.csv', index=False)

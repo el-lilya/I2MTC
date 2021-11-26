@@ -122,7 +122,8 @@ def train_model(test_runner: Runner,
                 train_runner: Runner,
                 epochs: int,
                 tracker: TensorboardExperiment,
-                folder_save: Optional[str] = None):
+                folder_save: Optional[str] = None,
+                save_checkpoint: bool = False):
     for epoch_id in range(epochs):
         # Reset the runners
         train_runner.reset()
@@ -142,10 +143,10 @@ def train_model(test_runner: Runner,
         # Flush the tracker after every epoch for live updates
         tracker.flush()
         torch.cuda.empty_cache()
-    # if test_runner.avg_accuracy > 0.5:
-    #     torch.save({
-    #         'epoch': epochs,
-    #         'model_state_dict': train_runner.model.state_dict(),
-    #         'optimizer_state_dict': train_runner.optimizer.state_dict(),
-    #         'loss': test_runner.avg_loss
-    #     }, f'{folder_save}/acc={test_runner.avg_accuracy: .2f}.pth')
+    if test_runner.avg_accuracy > 0.5 and save_checkpoint:
+        torch.save({
+            'epoch': epochs,
+            'model_state_dict': train_runner.model.state_dict(),
+            'optimizer_state_dict': train_runner.optimizer.state_dict(),
+            'loss': test_runner.avg_loss
+        }, f'{folder_save}/acc={test_runner.avg_accuracy: .2f}.pth')

@@ -8,7 +8,7 @@ from torch.utils.data import DataLoader, Dataset
 
 class ArcticDataset(Dataset):
     # def __init__(self, annotations_file: pd.DataFrame, root: str, transform=None):
-    def __init__(self, annotations_file: pd.DataFrame, root: str, data_dir="data/classification_20_clean",
+    def __init__(self, annotations_file: pd.DataFrame, root: str, data_dir="data/classification_17_clean",
                  transform=None):
         self.annotations_file = annotations_file
         self.root = root

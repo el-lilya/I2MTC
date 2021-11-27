@@ -19,7 +19,7 @@ class Runner:
             model: torch.nn.Module,
             device,
             optimizer: Optional[torch.optim.Optimizer] = None,
-            scheduler: Optional[torch.optim.lr_scheduler] = None,
+            scheduler = None,
             loss: torch.nn.modules.loss = torch.nn.CrossEntropyLoss(reduction="mean"),
     ) -> None:
         self.run_count = 0
@@ -104,7 +104,7 @@ def run_epoch(
                                             average='macro')  # or 'weighted'
     # Log Training Epoch Loss and Metrics
     experiment.add_epoch_metric("loss", train_runner.avg_loss, epoch_id)
-    experiment.add_epoch_metric("accuracy", train_runner.avg_accuracy, epoch_id)
+    # experiment.add_epoch_metric("accuracy", train_runner.avg_accuracy, epoch_id)
     experiment.add_epoch_metric("f1-score", train_runner.f1_score_metric, epoch_id)
 
     # Testing Loop
@@ -116,7 +116,7 @@ def run_epoch(
                                            average='weighted')  # or 'weighted'
     # Log Validation Epoch Loss and Metrics
     experiment.add_epoch_metric("loss", test_runner.avg_loss, epoch_id)
-    experiment.add_epoch_metric("accuracy", test_runner.avg_accuracy, epoch_id)
+    # experiment.add_epoch_metric("accuracy", test_runner.avg_accuracy, epoch_id)
     experiment.add_epoch_metric("f1-score", test_runner.f1_score_metric, epoch_id)
 
 
@@ -146,10 +146,10 @@ def train_model(test_runner: Runner,
         tracker.flush()
         torch.cuda.empty_cache()
 
-    if test_runner.avg_accuracy > 0.5 and save_checkpoint:
-        torch.save({
-            'epoch': epochs,
-            'model_state_dict': train_runner.model.state_dict(),
-            'optimizer_state_dict': train_runner.optimizer.state_dict(),
-            'loss': test_runner.avg_loss
-        }, f'{folder_save}/acc={test_runner.avg_accuracy: .2f}.pth')
+    # if test_runner.avg_accuracy > 0.5 and save_checkpoint:
+    #     torch.save({
+    #         'epoch': epochs,
+    #         'model_state_dict': train_runner.model.state_dict(),
+    #         'optimizer_state_dict': train_runner.optimizer.state_dict(),
+    #         'loss': test_runner.avg_loss
+    #     }, f'{folder_save}/acc={test_runner.avg_accuracy: .2f}.pth')

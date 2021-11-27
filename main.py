@@ -13,32 +13,42 @@ from matplotlib import pyplot as plt
 import torchvision
 from torchvision import transforms as T
 
-LOG_PATH = "./runs"
+
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 # Data configuration
-# root = '/content/drive/MyDrive/I2MTC' # for colab
 root = '.'
 data_dir = "data/classification_17_clean"
 model_name = 'resnet50'
-
+folder_save = f'{root}/results/check_pretrain'
 stage = 'check_pretrain'
 dataset = 'arctic'
+loss = torch.nn.CrossEntropyLoss(reduction="mean")
 
 # Hyperparameters
-LR = 1e-5  # 5e-5
+LR = 1e-5  # lr < 5e-4
 batch_size_train = 16
 batch_size_test = 16
 
 # experiment settings
 EPOCH_COUNT = 15
-kk = range(2, 3)
-number_of_exp = 1
+LOG_PATH = f"{root}/runs"
 
-# # for tests
-# EPOCH_COUNT = 2
-# kk = range(1, 2)
-# number_of_exp = 1
+# for colab
+colab = True
+save_checkpoint = True
+if colab:
+    batch_size_train = 32
+    batch_size_test = 32
+    root = '/content'
+    data_dir = 'classification_17_clean'
+    root_save = '/content/drive/MyDrive/I2MTC/'
+    LOG_PATH = f"{root_save}/runs"
+    folder_save = f'{root_save}/results/check_pretrain'
+
+DO_TRAIN = True
+kk = range(0, 2)
+number_of_exp = 1
 
 
 def main():
@@ -53,7 +63,7 @@ def main():
             print('*' * 10)
             # Setup the experiment tracker
             name_time = datetime.datetime.now().strftime('%d%h_%I_%M')
-            tracker = TensorboardExperiment(log_path= f'{LOG_PATH}/{stage}/experiments/k={k}_exp#{experiment}_lr={LR}/{name_time}')
+            tracker = TensorboardExperiment(log_path=f'{LOG_PATH}/{stage}/experiments/k={k}_exp#{experiment}_lr={LR}/{name_time}')
 
             # Create the data loaders
             train, test = train_test_split_k_shot(df, k, experiment)
@@ -78,10 +88,10 @@ def main():
             model.to(device)
             optimizer = torch.optim.Adam(model.parameters(), lr=LR)
             checkpoint = None
-            # path = f'results/pretrain/acc= {0.65}.pth'
-            path = 'results/pretrain/BBN.iNaturalist2018.res50.180epoch.best_model.pth'
+            path = f'{root_save}/results/pretrain/acc= {0.63}.pth'
+            # path = 'results/pretrain/BBN.iNaturalist2018.res50.180epoch.best_model.pth'
             checkpoint = torch.load(path)
-            print(checkpoint)
+            # print(checkpoint)
             if checkpoint is None:
                 pass
             else:
@@ -93,9 +103,8 @@ def main():
             test_runner = Runner(test_loader, model, device)
             train_runner = Runner(train_loader, model, device, optimizer)
 
-            folder_save = f'results/pretrain'
             # Run the epochs
-            train_model(test_runner, train_runner, EPOCH_COUNT, tracker, folder_save)
+            train_model(test_runner, train_runner, EPOCH_COUNT, tracker, folder_save, save_checkpoint=False)
 
             tracker.add_epoch_confusion_matrix(test_runner.y_true_batches, test_runner.y_pred_batches, EPOCH_COUNT)
             tracker.add_hparams({'k': k, '#_of_exp': experiment, 'batch_size': batch_size_train, 'epochs': EPOCH_COUNT,
@@ -117,7 +126,7 @@ def main():
 
             torch.cuda.empty_cache()
 
-    predictions.to_csv('results/false_predictions_17.csv', index=False)
+    predictions.to_csv(f'{root_save}/results/false_predictions_17.csv', index=False)
 
 
 if __name__ == "__main__":

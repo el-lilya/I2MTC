@@ -42,7 +42,7 @@ EPOCH_COUNT = 25
 LOG_PATH = f"{root}/runs"
 
 # for colab
-colab = False
+colab = True
 save_checkpoint = True
 if colab:
     batch_size_train = 32
@@ -53,7 +53,7 @@ if colab:
     LOG_PATH = f"{root_save}/runs"
     folder_save = f'{root_save}/results/pretrain'
 
-DO_TRAIN = False
+DO_TRAIN = True
 
 
 def main():
@@ -89,12 +89,12 @@ def main():
     model.to(device)
     optimizer = torch.optim.Adam(model.parameters(), lr=LR)
     checkpoint = None
-    # path = f'{folder_save}/acc= {0.57}.pth'
-    # checkpoint = torch.load(path)
+    path_load = f'{folder_save}/acc= {0.62}.pth'
+    checkpoint = torch.load(path_load)
     if checkpoint is None:
         pass
     else:
-        print(f'Load checkpoint for model and optimizer from {path}')
+        print(f'Load checkpoint for model and optimizer from {path_load}')
         model.load_state_dict(checkpoint['model_state_dict'])
         optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
 
@@ -118,14 +118,15 @@ def main():
 
         torch.cuda.empty_cache()
     if colab:
+        path = f'{folder_save}/acc={test_runner.avg_accuracy: .2f}.pth'
         if test_runner.avg_accuracy > 0.5 and save_checkpoint:
             torch.save({
                 'epoch': EPOCH_COUNT,
                 'model_state_dict': train_runner.model.state_dict(),
                 'optimizer_state_dict': train_runner.optimizer.state_dict(),
                 'loss': test_runner.avg_loss
-            }, f'{folder_save}/acc={test_runner.avg_accuracy: .2f}.pth')
-        print('Saved!')
+            }, path)
+            print(f'Saved to {path}!')
 
 
 if __name__ == "__main__":

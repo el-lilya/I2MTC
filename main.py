@@ -22,34 +22,34 @@ root = '.'
 root_save = '.'
 data_dir = "data/classification_17_clean"
 model_name = 'resnet50'
-stage = 'check_pretrain'
+stage = 'check_part_pretrain'  # 'check_full_pretrain', 'check_part_pretrain', 'no_pretrain'
 dataset = 'arctic'
 loss = torch.nn.CrossEntropyLoss(reduction="mean")
 
 # Hyperparameters
-LR = 1e-5  # lr < 5e-4
+LR = 1e-4  # lr < 5e-4
 batch_size_train = 16
 batch_size_test = 16
 
 # experiment settings
-EPOCH_COUNT = 15
-LOG_PATH = f"{root}/runs"
+EPOCH_COUNT = 30
 
 # for colab
-colab = False
+colab = True
 save_checkpoint = False
 if colab:
+    print('Running on colab')
     batch_size_train = 32
     batch_size_test = 32
     root = '/content'
     data_dir = 'classification_17_clean'
     root_save = '/content/drive/MyDrive/I2MTC/'
-    LOG_PATH = f"{root_save}/runs"
 
-folder_save = f'{root_save}/results/check_pretrain'
+LOG_PATH = f"{root_save}/runs"
+folder_save = f'{root_save}/results/{stage}'
 
-DO_TRAIN = False
-kk = range(1, 2)
+DO_TRAIN = True
+kk = range(0, 8)
 number_of_exp = 1
 
 
@@ -61,6 +61,8 @@ def main():
     for k in kk:
         if k == 0:
             DO_TRAIN = False
+        else:
+          DO_TRAIN = True
         for experiment in range(number_of_exp):
             print('*' * 10)
             print(f'k={k}, experiment={experiment}')
@@ -85,15 +87,17 @@ def main():
             optimizer = torch.optim.Adam(model.parameters(), lr=LR)
             checkpoint = None
             path = None
-            # path = f'{root_save}/results/pretrain/acc= {0.63}.pth'
-            ## path = 'results/pretrain/BBN.iNaturalist2018.res50.180epoch.best_model.pth'
-            # checkpoint = torch.load(path)
-            if checkpoint is None:
+
+            if stage == 'no_pretrain':
                 pass
-            else:
+            elif stage == 'check_part_pretrain':
+                path = f'{root_save}/results/pretrain/acc= 0.60.pth'
+                checkpoint = torch.load(path)
                 print(f'Load checkpoint for model and optimizer from {path}')
                 model.load_state_dict(checkpoint['model_state_dict'])
-                # optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+            elif stage == 'check_full_pretrain':
+                path = 'results/pretrain/BBN.iNaturalist2018.res50.180epoch.best_model.pth'
+                checkpoint = torch.load(path)
             scheduler = ReduceLROnPlateau(optimizer, 'min')
             # Create the runners
             train_runner = Runner(train_loader, model, device, optimizer, scheduler, loss=loss)
@@ -103,7 +107,7 @@ def main():
             if DO_TRAIN:
                 train_model(test_runner, train_runner, EPOCH_COUNT, tracker, folder_save, save_checkpoint=False)
                 tracker.add_epoch_confusion_matrix(test_runner.y_true_batches, test_runner.y_pred_batches, EPOCH_COUNT)
-                tracker.add_hparams({'k': k, '#_of_exp': experiment, 'batch_size': batch_size_train,
+                tracker.add_hparams({'stage': stage, 'k': k, '#_of_exp': experiment, 'batch_size': batch_size_train,
                                      'epochs': EPOCH_COUNT, 'lr': LR},
                                     {'train_accuracy': train_runner.avg_accuracy,
                                      'test_accuracy': test_runner.avg_accuracy,

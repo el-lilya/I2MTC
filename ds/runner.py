@@ -156,7 +156,7 @@ def eval_model(test_runner: Runner,
                                            test_runner.y_pred_batches,
                                            average='weighted')  # or 'weighted'
     # Log Validation Epoch Loss and Metrics
-    tracker.add_epoch_metric("accuracy", test_runner.avg_accuracy, 0)
+    # tracker.add_epoch_metric("accuracy", test_runner.avg_accuracy, 0)
     tracker.add_epoch_metric("f1-score", test_runner.f1_score_metric, 0)
     summary = ", ".join(
         [

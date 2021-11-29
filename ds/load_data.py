@@ -79,7 +79,7 @@ def train_test_split_k_shot(df: pd.DataFrame, k: int, num_of_exp: int, test_imgs
         test.reset_index(drop=True, inplace=True)
         return train, test
     else:
-        return None, df
+        return df, df
 
 
 def stratified_sample_df(df: pd.DataFrame, col: str, n_samples, random_state: int = 42):

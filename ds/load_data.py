@@ -69,14 +69,17 @@ def get_data(root: str, img_dir: str, img_format: str = '.jpeg'):
 
 
 def train_test_split_k_shot(df: pd.DataFrame, k: int, num_of_exp: int, test_imgs_per_class_cpu: int = 4):
-    train = stratified_sample_df(df, 'label', k, num_of_exp)
-    # indices = list(map(int, train.index))
-    test = df.iloc[[x for x in df.index if x not in train.index]]
-    if not torch.cuda.is_available():
-        test = stratified_sample_df(test, 'label', test_imgs_per_class_cpu)  # for cpu to train faster
-    train.reset_index(drop=True, inplace=True)
-    test.reset_index(drop=True, inplace=True)
-    return train, test
+    if k:
+        train = stratified_sample_df(df, 'label', k, num_of_exp)
+        # indices = list(map(int, train.index))
+        test = df.iloc[[x for x in df.index if x not in train.index]]
+        if not torch.cuda.is_available():
+            test = stratified_sample_df(test, 'label', test_imgs_per_class_cpu)  # for cpu to train faster
+        train.reset_index(drop=True, inplace=True)
+        test.reset_index(drop=True, inplace=True)
+        return train, test
+    else:
+        return None, df
 
 
 def stratified_sample_df(df: pd.DataFrame, col: str, n_samples, random_state: int = 42):

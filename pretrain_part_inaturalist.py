@@ -89,12 +89,12 @@ def main():
     model.to(device)
     optimizer = torch.optim.Adam(model.parameters(), lr=LR)
     checkpoint = None
-    path_load = f'{folder_save}/acc= {0.62}.pth'
+    path_load = f'{folder_save}/acc= {0.58}.pth'
     checkpoint = torch.load(path_load)
     if checkpoint is None:
         pass
     else:
-        print(f'Load checkpoint for model and optimizer from {path_load}')
+        print(f'Loading checkpoint for model and optimizer from {path_load}')
         model.load_state_dict(checkpoint['model_state_dict'])
         optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
 

@@ -11,9 +11,10 @@ class Model(torch.nn.Module):
             ct = 0
             for child in model_ft.children():
                 ct += 1
-            if ct < 7:
-                for param in child.parameters():
-                    param.requires_grad = False
+                # print(ct, child)
+                if ct < 8:
+                    for param in child.parameters():
+                        param.requires_grad = False
             num_ftrs = model_ft.fc.in_features
             model_ft.fc = nn.Linear(num_ftrs, num_classes)
             self.model = model_ft

@@ -14,7 +14,6 @@ import torchvision
 from torchvision import transforms as T
 from torch.optim.lr_scheduler import ReduceLROnPlateau
 
-
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 # Data configuration
@@ -22,17 +21,17 @@ root = '.'
 root_save = '.'
 data_dir = "data/classification_17_clean"
 model_name = 'resnet50'
-stage = 'check_full_pretrain'  # 'check_full_pretrain', 'check_part_pretrain', 'no_pretrain'
 dataset = 'arctic'
 loss = torch.nn.CrossEntropyLoss(reduction="mean")
 
 # Hyperparameters
-LR = 1e-4  # lr < 5e-4
 batch_size_train = 16
 batch_size_test = 16
+LR = 1e-4  # lr < 5e-4
 
 # experiment settings
 EPOCH_COUNT = 30
+stage = 'check_part_pretrain'  # 'check_full_pretrain', 'check_part_pretrain', 'no_pretrain'
 
 # for colab
 colab = True
@@ -48,7 +47,7 @@ if colab:
 LOG_PATH = f"{root_save}/runs"
 folder_save = f'{root_save}/results/{stage}'
 
-kk = range(0, 2)
+kk = range(0, 8)
 number_of_exp = 1
 
 
@@ -80,17 +79,14 @@ def main():
                                              transform=transform['test'], batch_size=batch_size_test)
 
             # Model and Optimizer
-            if stage == 'no_pretrain':
-                model = Model(model_name, num_classes, stage, device)
-                optimizer = torch.optim.Adam(model.parameters(), lr=LR)
-            elif stage == 'check_part_pretrain':
+            path = None
+            if stage == 'check_part_pretrain':
                 path = f'{root_save}/results/pretrain/acc= 0.60.pth'
-                model = Model(model_name, num_classes, stage, device, path)
             elif stage == 'check_full_pretrain':
-                model = Model(model_name, num_classes, stage, device)
+                path = f"{root}/BBN.iNaturalist2018.res50.180epoch.best_model.pth"
             else:
-                model = None
                 print(f'Stage {stage} is not implemented!')
+            model = Model(model_name, num_classes, stage, device, path)
             optimizer = torch.optim.Adam(model.parameters(), lr=LR)
             scheduler = ReduceLROnPlateau(optimizer, 'min')
             # Create the runners
@@ -103,11 +99,12 @@ def main():
                 tracker.add_epoch_confusion_matrix(test_runner.y_true_batches, test_runner.y_pred_batches, EPOCH_COUNT)
                 tracker.add_hparams({'stage': stage, 'k': k, '#_of_exp': experiment, 'batch_size': batch_size_train,
                                      'epochs': EPOCH_COUNT, 'lr': LR},
-                                    {'train_accuracy': train_runner.avg_accuracy,
-                                     'test_accuracy': test_runner.avg_accuracy,
-                                     'train_f1_score': train_runner.f1_score_metric,
-                                     'test_f1_score': test_runner.f1_score_metric
-                                     })
+                                    {
+                                        #   'train_accuracy': train_runner.avg_accuracy,
+                                        #  'test_accuracy': test_runner.avg_accuracy,
+                                        'train_f1_score': train_runner.f1_score_metric,
+                                        'test_f1_score': test_runner.f1_score_metric
+                                    })
             else:
                 eval_model(test_runner, tracker)
                 tracker.add_epoch_confusion_matrix(test_runner.y_true_batches, test_runner.y_pred_batches, 0)

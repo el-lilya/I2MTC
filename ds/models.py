@@ -11,8 +11,7 @@ class Model(torch.nn.Module):
         if stage == 'check_full_pretrain':
             full_inat_num_classes = 8142
             model_ft = Network(cfg, mode="train", num_classes=full_inat_num_classes)
-            model_path = "checkpoints/BBN_master/BBN.iNaturalist2018.res50.180epoch.best_model.pth"
-            model_ft.load_model(model_path)
+            model_ft.load_model(path)
             model_ft.classifier = nn.Sequential(nn.Linear(4096, 1000), nn.Linear(1000, 17))
         else:
             model_ft = models.resnet50(pretrained=True)

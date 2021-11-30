@@ -1,8 +1,8 @@
 import torch
 from torchvision import models
 import torch.nn as nn
-from checkpoints.BBN_master.lib.config import cfg
-from checkpoints.BBN_master.lib.net.network import Network
+from ds.checkpoints.BBN_master.lib.config import cfg
+from ds.checkpoints.BBN_master.lib.net.network import Network
 
 
 class Model(torch.nn.Module):
@@ -10,8 +10,9 @@ class Model(torch.nn.Module):
         super().__init__()
         if stage == 'check_full_pretrain':
             full_inat_num_classes = 8142
-            model_ft = Network(cfg, mode="train", num_classes=full_inat_num_classes)
+            model_ft = Network(cfg, mode="test", num_classes=full_inat_num_classes)
             model_ft.load_model(path)
+            model_ft.freeze_backbone()
             model_ft.classifier = nn.Sequential(nn.Linear(4096, 1000), nn.Linear(1000, 17))
         else:
             model_ft = models.resnet50(pretrained=True)

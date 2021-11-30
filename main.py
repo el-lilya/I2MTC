@@ -31,7 +31,7 @@ LR = 1e-4  # lr < 5e-4
 
 # experiment settings
 EPOCH_COUNT = 30
-stage = 'check_part_pretrain'  # 'check_full_pretrain', 'check_part_pretrain', 'no_pretrain'
+stage = 'check_full_pretrain'  # 'check_full_pretrain', 'check_part_pretrain', 'no_pretrain'
 
 # for colab
 colab = True

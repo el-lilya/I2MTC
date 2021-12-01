@@ -1,16 +1,11 @@
-import argparse
-
-from checkpoints.BBN_master.lib.config import update_config, cfg
-from checkpoints.BBN_master.lib.net.network import Network
+import pandas as pd
 
 
 def main():
-    full_inat_num_classes = 8142
-    model = Network(cfg, mode="train", num_classes=full_inat_num_classes)
-    print(model.cfg.BACKBONE)
-    model_path = "checkpoints/BBN_master/BBN.iNaturalist2018.res50.180epoch.best_model.pth"
-    model.load_model(model_path)
-    model.classifier = nn.Linear()
+    df = pd.read_json('data/clip/clipsubset.json')
+    urls = df['url']
+    urls.to_csv('data/clip/urls.txt', index=False, header=False)
+    print(urls)
 
 
 if __name__ == "__main__":

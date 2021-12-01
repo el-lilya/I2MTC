@@ -38,6 +38,7 @@ class Runner:
         self.stage = Stage.VAL if optimizer is None else Stage.TRAIN
         self.device = device
         self.scheduler = scheduler
+        self.best_f1_score = 0
 
     @property
     def avg_accuracy(self):
@@ -118,6 +119,8 @@ def run_epoch(
     experiment.add_epoch_metric("loss", test_runner.avg_loss, epoch_id)
     # experiment.add_epoch_metric("accuracy", test_runner.avg_accuracy, epoch_id)
     experiment.add_epoch_metric("f1-score", test_runner.f1_score_metric, epoch_id)
+    if test_runner.best_f1_score < test_runner.f1_score_metric:
+        test_runner.best_f1_score = test_runner.f1_score_metric
 
 
 def train_model(test_runner: Runner,

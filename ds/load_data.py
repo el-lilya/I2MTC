@@ -100,7 +100,7 @@ def create_sim2arctic_from_inaturalist(root: str = '.',
                      'pepper': 'Solanaceae_Capsicum_',
                      'tomato': 'Solanaceae_Solanum_lycopersicum',
                      'kohlrabi': 'Brassicaceae_Brassica_',  # not really similar to arctic one
-                     'frisee': 'Asteraceae_Lactuca_',  # wild, need Lactuca_sativa
+                     'frisee': 'Asteraceae_Lactuca_',  # wild, need Lactuca_sativa, not great in clip
                      'lactúca': '__Repeats__', # 'Asteraceae_Lactuca_'
                      'lettuce_oakleaf': '__Repeats__', # 'Asteraceae_Lactuca_'
                      'radish': 'Brassicaceae_Raphanus_raphanistrum',

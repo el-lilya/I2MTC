@@ -27,7 +27,7 @@ loss = torch.nn.CrossEntropyLoss(reduction="mean")
 # Hyperparameters
 batch_size_train = 16
 batch_size_test = 16
-LR = 1e-4  # lr < 5e-4
+LR = 5e-4  # lr < 5e-4
 
 # experiment settings
 # stage = 'check_part_pretrain'  # 'check_full_pretrain', 'check_part_pretrain', 'no_pretrain'
@@ -46,16 +46,23 @@ if colab:
 LOG_PATH = f"{root_save}/runs"
 # folder_save = f'{root_save}/results/{stage}'
 
-EPOCH_COUNT = 50
-kk = range(0, 8)
-number_of_exp = 5
+# final train
+# EPOCH_COUNT = 50
+# kk = range(0, 8)
+# number_of_exp = 5
+
+# test train
+EPOCH_COUNT = 10
+kk = range(1, 3)
+number_of_exp = 1
 
 
 def main():
     # torch.manual_seed(17)
     df, num_classes = get_data(root, data_dir)
     # predictions = pd.DataFrame()
-    for stage in ['no_pretrain', 'check_part_pretrain', 'check_full_pretrain']:
+    # for stage in ['no_pretrain', 'check_part_pretrain', 'check_full_pretrain']:
+    for stage in ['no_pretrain']:
         folder_save = f'{root_save}/results/{stage}'
         for k in kk:
             if k == 0:

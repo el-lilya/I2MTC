@@ -107,18 +107,19 @@ def main():
                 if do_train:
                     train_model(test_runner, train_runner, EPOCH_COUNT, tracker, folder_save, save_checkpoint=False)
                     tracker.add_epoch_confusion_matrix(test_runner.y_true_batches, test_runner.y_pred_batches, EPOCH_COUNT)
-                    tracker.add_hparams({'stage': stage, 'k': k, '#_of_exp': experiment, 'batch_size': batch_size_train,
-                                         'epochs': EPOCH_COUNT, 'lr': LR},
-                                        {
-                                            #   'train_accuracy': train_runner.avg_accuracy,
-                                            #  'test_accuracy': test_runner.avg_accuracy,
-                                            'train_f1_score': train_runner.f1_score_metric,
-                                            'test_f1_score': test_runner.best_f1_score
-                                        })
+
                 else:
                     eval_model(test_runner, tracker)
                     tracker.add_epoch_confusion_matrix(test_runner.y_true_batches, test_runner.y_pred_batches, 0)
 
+                tracker.add_hparams({'stage': stage, 'k': k, '#_of_exp': experiment, 'batch_size': batch_size_train,
+                                     'epochs': EPOCH_COUNT, 'lr': LR},
+                                    {
+                                        #   'train_accuracy': train_runner.avg_accuracy,
+                                        #  'test_accuracy': test_runner.avg_accuracy,
+                                        'train_f1_score': train_runner.f1_score_metric,
+                                        'test_f1_score': test_runner.best_f1_score
+                                    })
         #         predictions_exp = pd.DataFrame({'k': k, 'experiment': experiment,
         #                                        'path': np.concatenate(test_runner.idxs),
         #                                         'label': test_runner.y_true_batches,

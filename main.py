@@ -58,7 +58,6 @@ number_of_exp = 5
 
 
 def main():
-    # torch.manual_seed(17)
     df, num_classes = get_data(root, data_dir)
     # predictions = pd.DataFrame()
     for stage in ['no_pretrain', 'check_part_pretrain', 'check_full_pretrain']:
@@ -96,7 +95,7 @@ def main():
                     path = f"{root}/BBN.iNaturalist2018.res50.180epoch.best_model.pth"
                 else:
                     print(f'Stage {stage} is not implemented!')
-                model = Model(model_name, num_classes, stage, device, path)
+                model = Model(model_name, num_classes, stage, device, path, k)
                 optimizer = torch.optim.Adam(model.parameters(), lr=LR)
                 scheduler = ReduceLROnPlateau(optimizer, 'min')
                 # Create the runners

@@ -115,7 +115,7 @@ def create_sim2arctic_from_inaturalist(root: str = '.',
                      'parsley': 'Apiaceae_Osmorhiza'  # family, no genus
                      }
 
-    arctic_names2labels = {'empty_slot': 0,
+    arctic_names2labels = {'empty_slot': 0,  # steel table
                            'pepper': 1,
                            'tomato': 2,
                            'kohlrabi': 3,
@@ -161,7 +161,19 @@ def create_sim2arctic_from_inaturalist(root: str = '.',
 
 def urls_from_clip(root='.', data_dir='data/clip'):
     os.makedirs(f'{root}/{data_dir}/txt', exist_ok=True)
-    for name in range(1, 17):
-        df = pd.read_json(f'{root}/{data_dir}/json/{name}.json')
-        urls = df['url']
-        urls.to_csv(f'{root}/{data_dir}/txt/{name}.txt', index=False, header=False)
+    for file in os.listdir(f'{root}/{data_dir}/json'):
+        if file.endswith('.json'):
+            name = file.split('.json')[0]
+            df = pd.read_json(f'{root}/{data_dir}/json/{file}')
+            urls = df['url']
+            urls.to_csv(f'{root}/{data_dir}/txt/{name}.txt', index=False, header=False)
+
+
+def imgs_from_url(output_folder="data/clip/image_folder", thread_count=64, number_sample_per_shard=200,
+                  oom_shard_count=2, url_folder="data/clip/txt/"):
+    cmd = f'img2dataset  --output_folder={output_folder} --thread_count={thread_count} ' \
+          f'--number_sample_per_shard={number_sample_per_shard} --oom_shard_count={oom_shard_count} ' \
+          f'--url_list={url_folder}'
+    for name in range(17):
+        file = f'{name}.txt'
+        os.system(cmd+file)

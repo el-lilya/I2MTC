@@ -155,12 +155,12 @@ def eval_model(test_runner: Runner,
     tracker.set_stage(Stage.VAL)
     test_runner.run("Validation Batches", tracker)
 
-    test_runner.f1_score_metric = f1_score(test_runner.y_true_batches,
+    test_runner.best_f1_score = f1_score(test_runner.y_true_batches,
                                            test_runner.y_pred_batches,
                                            average='weighted')  # or 'weighted'
     # Log Validation Epoch Loss and Metrics
     # tracker.add_epoch_metric("accuracy", test_runner.avg_accuracy, 0)
-    tracker.add_epoch_metric("f1-score", test_runner.f1_score_metric, 0)
+    tracker.add_epoch_metric("f1-score", test_runner.best_f1_score, 0)
     summary = ", ".join(
         [
             f"Test Accuracy: {test_runner.avg_accuracy: 0.4f}",

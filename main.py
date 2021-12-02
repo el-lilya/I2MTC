@@ -40,7 +40,7 @@ if colab:
     batch_size_train = 64
     batch_size_test = 64
     root = '/content'
-    data_dir = 'classification_17_clean'
+    data_dir = 'classification_17_clean_clean'
     root_save = '/content/drive/MyDrive/I2MTC/'
 
 LOG_PATH = f"{root_save}/runs"

@@ -119,17 +119,17 @@ def create_sim2arctic_from_inaturalist(root: str = '.',
                            'pepper': 1,
                            'tomato': 2,
                            'kohlrabi': 3,
-                           'frisee': 4,
+                           'frisee': 4,  # curly lettuce plants greenhouse, bad in clip
                            'lactúca': 5,
-                           'mint': 6,
-                           'lettuce_oakleaf': 7,
-                           'radish': 8,
+                           'mint': 6,  # mint plants greenhouse
+                           'lettuce_oakleaf': 7,  # red oak leaves lettuce plants greenhouse
+                           'radish': 8,  # not very good in clip
                            'basil': 9,
-                           'cilantro': 10,
+                           'cilantro': 10,  # curly parsley
                            'cress': 11,
                            'chard': 12,
-                           'brassica': 13,
-                           'lettuce_endivia': 14,
+                           'brassica': 13,  # not very good in clip
+                           'lettuce_endivia': 14,  # not very good in clip
                            'parsley': 15,
                            'chives': 16,
                            # 'basil_2': 17,
@@ -157,3 +157,11 @@ def create_sim2arctic_from_inaturalist(root: str = '.',
         files = os.listdir(dest_fpath)
         files_rm = random.sample(files, max(0, len(files) - class_size))
         _ = [os.remove(os.path.join(dest_fpath, file)) for file in files_rm]
+
+
+def urls_from_clip(root='.', data_dir='data/clip'):
+    os.makedirs(f'{root}/{data_dir}/txt', exist_ok=True)
+    for name in range(1, 17):
+        df = pd.read_json(f'{root}/{data_dir}/json/{name}.json')
+        urls = df['url']
+        urls.to_csv(f'{root}/{data_dir}/txt/{name}.txt', index=False, header=False)

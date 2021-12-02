@@ -1,11 +1,9 @@
 import pandas as pd
+from ds.load_data import urls_from_clip
 
 
 def main():
-    df = pd.read_json('data/clip/clipsubset.json')
-    urls = df['url']
-    urls.to_csv('data/clip/urls.txt', index=False, header=False)
-    print(urls)
+    urls_from_clip()
 
 
 if __name__ == "__main__":

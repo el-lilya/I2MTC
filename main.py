@@ -19,7 +19,7 @@ device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 # Data configuration
 root = '.'
 root_save = '.'
-data_dir = "data/classification_17_clean"
+data_dir = "data/classification_17_clean_clean"
 model_name = 'resnet50'
 dataset = 'arctic'
 loss = torch.nn.CrossEntropyLoss(reduction="mean")
@@ -47,22 +47,21 @@ LOG_PATH = f"{root_save}/runs"
 # folder_save = f'{root_save}/results/{stage}'
 
 # final train
-# EPOCH_COUNT = 50
-# kk = range(0, 8)
-# number_of_exp = 5
+EPOCH_COUNT = 50
+kk = range(0, 8)
+number_of_exp = 5
 
-# test train
-EPOCH_COUNT = 10
-kk = range(1, 3)
-number_of_exp = 1
+# # test train
+# EPOCH_COUNT = 10
+# kk = range(1, 3)
+# number_of_exp = 1
 
 
 def main():
     # torch.manual_seed(17)
     df, num_classes = get_data(root, data_dir)
     # predictions = pd.DataFrame()
-    # for stage in ['no_pretrain', 'check_part_pretrain', 'check_full_pretrain']:
-    for stage in ['no_pretrain']:
+    for stage in ['no_pretrain', 'check_part_pretrain', 'check_full_pretrain']:
         folder_save = f'{root_save}/results/{stage}'
         for k in kk:
             if k == 0:
@@ -89,7 +88,9 @@ def main():
 
                 # Model and Optimizer
                 path = None
-                if stage == 'check_part_pretrain':
+                if stage == 'no_pretrain':
+                    pass
+                elif stage == 'check_part_pretrain':
                     path = f'{root_save}/results/pretrain/acc= 0.60.pth'
                 elif stage == 'check_full_pretrain':
                     path = f"{root}/BBN.iNaturalist2018.res50.180epoch.best_model.pth"

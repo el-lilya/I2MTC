@@ -117,11 +117,11 @@ def main():
 
         torch.cuda.empty_cache()
     if colab:
-        path = f'{folder_save}/acc={test_runner.avg_accuracy: .2f}.pth'
-        if test_runner.avg_accuracy > 0.5 and save_checkpoint:
+        path = f'{folder_save}/acc={test_runner.best_f1_score: .2f}.pth'
+        if test_runner.best_f1_score > 0.5 and save_checkpoint:
             torch.save({
                 'epoch': EPOCH_COUNT,
-                'model_state_dict': train_runner.model.state_dict(),
+                'model_state_dict': test_runner.model_state,
                 'optimizer_state_dict': train_runner.optimizer.state_dict(),
                 'loss': test_runner.avg_loss
             }, path)

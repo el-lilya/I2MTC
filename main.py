@@ -90,7 +90,7 @@ def main():
                 if stage == 'no_pretrain':
                     pass
                 elif stage == 'check_part_pretrain':
-                    path = f'{root_save}/results/pretrain/acc= 0.60.pth'
+                    path = f'{root_save}/results/pretrain/acc= 0.59.pth'
                 elif stage == 'check_full_pretrain':
                     path = f"{root}/BBN.iNaturalist2018.res50.180epoch.best_model.pth"
                 else:

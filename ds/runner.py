@@ -39,6 +39,7 @@ class Runner:
         self.device = device
         self.scheduler = scheduler
         self.best_f1_score = 0
+        self.model_state = None
 
     @property
     def avg_accuracy(self):
@@ -121,6 +122,7 @@ def run_epoch(
     experiment.add_epoch_metric("f1-score", test_runner.f1_score_metric, epoch_id)
     if test_runner.best_f1_score < test_runner.f1_score_metric:
         test_runner.best_f1_score = test_runner.f1_score_metric
+        test_runner.model_state = test_runner.model.state_dict()
 
 
 def train_model(test_runner: Runner,
@@ -129,6 +131,7 @@ def train_model(test_runner: Runner,
                 tracker: TensorboardExperiment,
                 folder_save: Optional[str] = None,
                 save_checkpoint: bool = False):
+    best_val_score = 0
     for epoch_id in range(epochs):
         # Reset the runners
         train_runner.reset()

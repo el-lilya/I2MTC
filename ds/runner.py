@@ -122,7 +122,7 @@ def run_epoch(
     experiment.add_epoch_metric("f1-score", test_runner.f1_score_metric, epoch_id)
     if test_runner.best_f1_score < test_runner.f1_score_metric:
         test_runner.best_f1_score = test_runner.f1_score_metric
-        test_runner.model_state = test_runner.model.state_dict()
+        test_runner.model_state = test_runner.model.model.state_dict()
 
 
 def train_model(test_runner: Runner,

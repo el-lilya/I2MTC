@@ -58,29 +58,36 @@ def plot_train_images(k: int, exp: int, labels, log_dir='../runs',
 
 
 def get_mean_std_metric(name: str, name_output: str, log_dir='../runs'):
-    metric_types = ['accuracy', 'f1_score']
-    results_full = pd.read_csv(name)
-    results = pd.DataFrame({'k': results_full['k'].unique()})
-    for metric in metric_types:
-        dict_mean_metric = results_full.groupby('k')[f'test_{metric}'].mean().to_dict()
-        dict_std_metric = results_full.groupby('k')[f'test_{metric}'].std().to_dict()
+    metric = 'f1_score'
+    hparams_full = pd.read_csv(name)
+    stages = hparams_full['stage'].unique()
+    results_full = pd.DataFrame()
+    for stage in stages:
+        hparams_stage = hparams_full[hparams_full['stage'] == stage]
+        results = pd.DataFrame({'k': hparams_stage['k'].unique()})
+        results['stage'] = stage
+        dict_mean_metric = hparams_stage.groupby('k')[f'test_{metric}'].mean().to_dict()
+        dict_std_metric = hparams_stage.groupby('k')[f'test_{metric}'].std().to_dict()
         results[f'mean_{metric}'] = results['k'].map(dict_mean_metric)
         results[f'std_{metric}'] = results['k'].map(dict_std_metric)
-        # print(results)
-        max_k = results['k'].max()
-        name_time = datetime.datetime.now().strftime('%d%h_%I_%M')
-        tracker = TensorboardExperiment(log_path= f'{log_dir}/metrics/{metric}/max_k={max_k}/{name_time}')
-        fig = plt.figure(figsize=(8, 6))
-        plt.plot(results['k'], results[f'mean_{metric}'])
+        results_full = pd.concat([results_full, results])
+    max_k = results_full['k'].max()
+    name_time = datetime.datetime.now().strftime('%d%h_%I_%M')
+    tracker = TensorboardExperiment(log_path=f'{log_dir}/metrics/{metric}/max_k={max_k}/{name_time}')
+    fig = plt.figure(figsize=(8, 6))
+    for stage in stages:
+        results = results_full[results_full['stage'] == stage]
+        plt.plot(results['k'], results[f'mean_{metric}'], label=stage)
         plt.fill_between(results['k'], (results[f'mean_{metric}'] - results[f'std_{metric}']),
-                         (results[f'mean_{metric}'] + results[f'std_{metric}']), color='blue', alpha=0.1)
+                         (results[f'mean_{metric}'] + results[f'std_{metric}']), alpha=0.1)
         plt.title(f'Mean {metric}')
-        plt.xlabel('k')
-        plt.ylabel(f'{metric}')
-        plt.grid()
-        tracker.add_figure(f'{metric.upper()}', fig)
-        tracker.flush()
-    results.to_csv(name_output)
+    plt.xlabel('k')
+    plt.ylabel(f'{metric}')
+    plt.grid()
+    plt.legend()
+    tracker.add_figure(f'{metric.upper()}', fig)
+    tracker.flush()
+    results_full.to_csv(name_output)
 
 
 def main():

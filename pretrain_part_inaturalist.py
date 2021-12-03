@@ -38,15 +38,15 @@ batch_size_train = 16
 batch_size_test = 16
 
 # experiment settings
-EPOCH_COUNT = 25
+EPOCH_COUNT = 50
 LOG_PATH = f"{root}/runs"
 
 # for colab
 colab = True
 save_checkpoint = True
 if colab:
-    batch_size_train = 32
-    batch_size_test = 32
+    batch_size_train = 64
+    batch_size_test = 64
     root = '/content'
     data_dir = 'sim2arctic_50'
     root_save = '/content/drive/MyDrive/I2MTC/'

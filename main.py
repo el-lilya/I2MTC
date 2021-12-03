@@ -48,7 +48,7 @@ LOG_PATH = f"{root_save}/runs"
 
 # final train
 EPOCH_COUNT = 50
-kk = range(4, 8)
+kk = range(0, 6)
 number_of_exp = 5
 
 # # test train
@@ -60,7 +60,7 @@ number_of_exp = 5
 def main():
     df, num_classes = get_data(root, data_dir)
     # predictions = pd.DataFrame()
-    for stage in ['no_pretrain', 'check_full_pretrain']:
+    for stage in ['check_part_pretrain']:
         folder_save = f'{root_save}/results/{stage}'
         for k in kk:
             if k == 0:

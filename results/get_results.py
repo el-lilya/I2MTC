@@ -1,6 +1,6 @@
 from process_results_utils import get_mean_std_metric, plot_train_images, plot_false_predictions
 
-colab = False
+colab = True
 
 
 def main():

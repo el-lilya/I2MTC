@@ -132,13 +132,16 @@ def train_model(test_runner: Runner,
                 folder_save: Optional[str] = None,
                 save_checkpoint: bool = False):
     best_val_score = 0
+    train_runner.optimizer.zero_grad()
+    train_runner.optimizer.step()
     for epoch_id in range(epochs):
         # Reset the runners
         train_runner.reset()
         test_runner.reset()
 
+        train_runner.scheduler.step()
         run_epoch(test_runner, train_runner, tracker, epoch_id)
-        train_runner.scheduler.step(test_runner.avg_loss)
+        # train_runner.scheduler.step(test_runner.avg_loss)
         # Compute Average Epoch Metrics
         summary = ", ".join(
             [

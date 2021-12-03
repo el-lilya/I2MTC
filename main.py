@@ -13,6 +13,8 @@ from matplotlib import pyplot as plt
 import torchvision
 from torchvision import transforms as T
 from torch.optim.lr_scheduler import ReduceLROnPlateau
+from warmup_scheduler import GradualWarmupScheduler
+from torch.optim.lr_scheduler import StepLR
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
@@ -27,13 +29,13 @@ loss = torch.nn.CrossEntropyLoss(reduction="mean")
 # Hyperparameters
 batch_size_train = 16
 batch_size_test = 16
-LR = 5e-4  # lr < 5e-4
+LR = 1e-3  # lr < 5e-4
 
 # experiment settings
 # stage = 'check_part_pretrain'  # 'check_full_pretrain', 'check_part_pretrain', 'no_pretrain'
 
 # for colab
-colab = True
+colab = False
 save_checkpoint = False
 if colab:
     print('Running on colab')
@@ -48,7 +50,7 @@ LOG_PATH = f"{root_save}/runs"
 
 # final train
 EPOCH_COUNT = 50
-kk = range(0, 6)
+kk = range(1, 6)
 number_of_exp = 5
 
 # # test train
@@ -60,7 +62,7 @@ number_of_exp = 5
 def main():
     df, num_classes = get_data(root, data_dir)
     # predictions = pd.DataFrame()
-    for stage in ['check_part_pretrain']:
+    for stage in ['no_pretrain']:
         folder_save = f'{root_save}/results/{stage}'
         for k in kk:
             if k == 0:
@@ -97,9 +99,12 @@ def main():
                     print(f'Stage {stage} is not implemented!')
                 model = Model(model_name, num_classes, stage, device, path, k)
                 optimizer = torch.optim.Adam(model.parameters(), lr=LR)
-                scheduler = ReduceLROnPlateau(optimizer, 'min')
+                # scheduler = ReduceLROnPlateau(optimizer, 'min')
+                scheduler = StepLR(optimizer, step_size=10, gamma=0.2)
+                scheduler_warmup = GradualWarmupScheduler(optimizer, multiplier=1, total_epoch=5,
+                                                          after_scheduler=scheduler)
                 # Create the runners
-                train_runner = Runner(train_loader, model, device, optimizer, scheduler, loss=loss)
+                train_runner = Runner(train_loader, model, device, optimizer, scheduler_warmup, loss=loss)
                 test_runner = Runner(test_loader, model, device, loss=loss)
 
                 # Run the epochs

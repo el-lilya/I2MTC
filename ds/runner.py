@@ -143,8 +143,8 @@ def train_model(test_runner: Runner,
         summary = ", ".join(
             [
                 f"\n[Epoch: {epoch_id + 1}/{epochs}]",
-                f"Test Accuracy: {test_runner.avg_accuracy: 0.4f}",
-                f"Train Accuracy: {train_runner.avg_accuracy: 0.4f}",
+                f"Test f1-score: {test_runner.f1_score_metric: 0.4f}",
+                f"Train f1-score: {train_runner.f1_score_metric: 0.4f}",
             ]
         )
         print(summary)

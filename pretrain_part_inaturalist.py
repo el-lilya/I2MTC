@@ -109,8 +109,7 @@ def main():
         tracker.add_epoch_confusion_matrix(test_runner.y_true_batches, test_runner.y_pred_batches, EPOCH_COUNT)
         tracker.add_hparams({'batch_size': batch_size_train, 'lr': LR, 'epochs': EPOCH_COUNT,
                              'samples/class': samples_per_class},
-                            {'train_accuracy': train_runner.avg_accuracy,
-                             'test_accuracy': test_runner.avg_accuracy,
+                            {
                              'train_f1_score': train_runner.f1_score_metric,
                              'test_f1_score': test_runner.f1_score_metric
                              })

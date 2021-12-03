@@ -41,7 +41,7 @@ class Model(torch.nn.Module):
         if stage == 'check_part_pretrain':
             checkpoint = torch.load(path)
             print(f'Load checkpoint for model and optimizer from {path}')
-            self.model.load_state_dict(checkpoint['model_state_dict'])
+            self.load_state_dict(checkpoint['model_state_dict'])
         self.model.to(device)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:

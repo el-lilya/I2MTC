@@ -114,8 +114,6 @@ def main():
                 tracker.add_hparams({'stage': stage, 'k': k, '#_of_exp': experiment, 'batch_size': batch_size_train,
                                      'epochs': EPOCH_COUNT, 'lr': LR},
                                     {
-                                        #   'train_accuracy': train_runner.avg_accuracy,
-                                        #  'test_accuracy': test_runner.avg_accuracy,
                                         'train_f1_score': train_runner.f1_score_metric,
                                         'test_f1_score': test_runner.best_f1_score
                                     })

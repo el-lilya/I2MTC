@@ -1,13 +1,6 @@
 img_path,label
 0\17.jpeg,0
 1\160.jpeg,1
-10\16.jpeg,10
-11\28.jpeg,11
-12\47.jpeg,12
-13\4.jpeg,13
-14\2.jpeg,14
-15\24.jpeg,15
-16\56.jpeg,16
 2\13.jpeg,2
 3\30.jpeg,3
 4\252.jpeg,4
@@ -16,3 +9,10 @@ img_path,label
 7\1.jpeg,7
 8\15.jpeg,8
 9\58.jpeg,9
+10\16.jpeg,10
+11\28.jpeg,11
+12\47.jpeg,12
+13\4.jpeg,13
+14\2.jpeg,14
+15\24.jpeg,15
+16\56.jpeg,16

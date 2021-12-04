@@ -16,7 +16,7 @@ def get_transforms(dataset: str = 'arctic'):
                 transforms.RandomResizedCrop(IMAGE_SIZE),
                 transforms.ColorJitter(brightness=.2, contrast=.2, hue=0),
                 transforms.RandomHorizontalFlip(),
-                # transforms.RandomRotation((0, 20)),
+                # transforms.RandomRotation((0, 20)),  # TODO: blur, optical distortion (albumentations), cutmix
                 transforms.ToTensor(),
                 transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
             ]),
@@ -63,7 +63,7 @@ def get_data(root: str, img_dir: str, img_format: str = '.jpeg'):
             # df_i['img_path'] = df_i['img_path'].apply(lambda x: os.path.join(img_dir, label, x))
             df = pd.concat([df, df_i])
     # num_classes = df['label'].nunique()
-    num_classes = len(os.listdir(os.path.join(root, img_dir)))
+    num_classes = len([label for label in os.listdir(os.path.join(root, img_dir)) if os.path.isdir(os.path.join(root, img_dir, label))])
     df.reset_index(drop=True, inplace=True)
     return df, num_classes
 

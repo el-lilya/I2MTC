@@ -10,7 +10,9 @@ def main():
     # print(get_data(root='.', img_dir='data/clip/sim2arctic_clip', img_format='.jpg'))
     for i, bottleneck in enumerate(models.resnet50().layer4.children()):
         if i > 1:
-            print(i, bottleneck)
+            for j, layer in enumerate(bottleneck.children()):
+                if j >= 0:
+                    print(layer)
 
 
 if __name__ == "__main__":

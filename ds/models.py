@@ -23,11 +23,13 @@ class Model(torch.nn.Module):
             model_ft = models.resnet50(pretrained=True)
             for param in model_ft.parameters():
                 param.requires_grad = False
-            if stage == 'pretrain':
+            if stage in ['pretrain', 'check_part_pretrain']:
                 for i, bottleneck in enumerate(model_ft.layer4.children()):
                     if i > 1:
-                        for param in bottleneck.parameters():
-                            param.requires_grad = True
+                        for j, layer in enumerate(bottleneck.children()):
+                            if j > 1:
+                                for param in layer.parameters():
+                                    param.requires_grad = True
 
             num_ftrs = model_ft.fc.in_features
             model_ft.fc = nn.Linear(num_ftrs, num_classes)

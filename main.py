@@ -29,7 +29,7 @@ loss = torch.nn.CrossEntropyLoss(reduction="mean")
 # Hyperparameters
 batch_size_train = 16
 batch_size_test = 16
-LR = 1e-3  # lr < 5e-4
+LR = 1e-4  # lr < 5e-4
 
 # experiment settings
 # stage = 'check_part_pretrain'  # 'check_full_pretrain', 'check_part_pretrain', 'no_pretrain'
@@ -48,21 +48,23 @@ if colab:
 LOG_PATH = f"{root_save}/runs"
 # folder_save = f'{root_save}/results/{stage}'
 
-# final train
-EPOCH_COUNT = 50
-kk = range(1, 6)
-number_of_exp = 5
+# # final train
+# EPOCH_COUNT = 50
+# kk = range(1, 6)
+# number_of_exp = 5
 
-# # test train
-# EPOCH_COUNT = 10
-# kk = range(1, 3)
-# number_of_exp = 1
+# test train
+EPOCH_COUNT = 20
+kk = range(1, 2)
+number_of_exp = 1
+
+pretrain_dataset = 'iNaturalist'  # iNaturalist, clip
 
 
 def main():
     df, num_classes = get_data(root, data_dir)
     # predictions = pd.DataFrame()
-    for stage in ['no_pretrain']:
+    for stage in ['check_part_pretrain']:
         folder_save = f'{root_save}/results/{stage}'
         for k in kk:
             if k == 0:
@@ -75,8 +77,12 @@ def main():
                 print('*' * 10)
                 # Setup the experiment tracker
                 name_time = datetime.datetime.now().strftime('%d%h_%I_%M')
-                tracker = TensorboardExperiment(log_path=f'{LOG_PATH}/{stage}/experiments/k={k}_exp#{experiment}_lr={LR}/'
-                                                         f'{name_time}')
+                if stage == 'check_part_pretrain':
+                    tracker = TensorboardExperiment(log_path=f'{LOG_PATH}/{stage}/{pretrain_dataset}/experiments/'
+                                                             f'k={k}_exp#{experiment}_lr={LR}/{name_time}')
+                else:
+                    tracker = TensorboardExperiment(log_path=f'{LOG_PATH}/{stage}/experiments/k={k}_exp#{experiment}_'
+                                                             f'lr={LR}/{name_time}')
                 # Create the data loaders
                 train, test = train_test_split_k_shot(df, k, experiment)
                 train.to_csv(f'{root_save}/splits/train_k{k}_#{experiment}', index=False)
@@ -92,7 +98,7 @@ def main():
                 if stage == 'no_pretrain':
                     pass
                 elif stage == 'check_part_pretrain':
-                    path = f'{root_save}/results/pretrain/acc= 0.61.pth'
+                    path = f'{root_save}/results/pretrain/{pretrain_dataset}/acc= 0.54.pth'
                 elif stage == 'check_full_pretrain':
                     path = f"{root}/BBN.iNaturalist2018.res50.180epoch.best_model.pth"
                 else:
@@ -100,7 +106,7 @@ def main():
                 model = Model(model_name, num_classes, stage, device, path, k)
                 optimizer = torch.optim.Adam(model.parameters(), lr=LR)
                 # scheduler = ReduceLROnPlateau(optimizer, 'min')
-                scheduler = StepLR(optimizer, step_size=10, gamma=0.2)
+                scheduler = StepLR(optimizer, step_size=10, gamma=0.1)
                 scheduler_warmup = GradualWarmupScheduler(optimizer, multiplier=1, total_epoch=5,
                                                           after_scheduler=scheduler)
                 # Create the runners

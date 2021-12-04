@@ -39,6 +39,7 @@ class Runner:
         self.device = device
         self.scheduler = scheduler
         self.best_f1_score = 0
+        self.model_state = None
 
     @property
     def avg_accuracy(self):
@@ -121,6 +122,7 @@ def run_epoch(
     experiment.add_epoch_metric("f1-score", test_runner.f1_score_metric, epoch_id)
     if test_runner.best_f1_score < test_runner.f1_score_metric:
         test_runner.best_f1_score = test_runner.f1_score_metric
+        test_runner.model_state = test_runner.model.model.state_dict()
 
 
 def train_model(test_runner: Runner,
@@ -129,19 +131,24 @@ def train_model(test_runner: Runner,
                 tracker: TensorboardExperiment,
                 folder_save: Optional[str] = None,
                 save_checkpoint: bool = False):
+    best_val_score = 0
+    # train_runner.optimizer.zero_grad()
+    # train_runner.optimizer.step()
     for epoch_id in range(epochs):
         # Reset the runners
         train_runner.reset()
         test_runner.reset()
-
+        # train_runner.scheduler.step()
         run_epoch(test_runner, train_runner, tracker, epoch_id)
-        train_runner.scheduler.step(test_runner.avg_loss)
+        train_runner.scheduler.step(metrics=test_runner.f1_score_metric)
+        print(train_runner.optimizer.param_groups[0]['lr'])
+
         # Compute Average Epoch Metrics
         summary = ", ".join(
             [
                 f"\n[Epoch: {epoch_id + 1}/{epochs}]",
-                f"Test Accuracy: {test_runner.avg_accuracy: 0.4f}",
-                f"Train Accuracy: {train_runner.avg_accuracy: 0.4f}",
+                f"Test f1-score: {test_runner.f1_score_metric: 0.4f}",
+                f"Train f1-score: {train_runner.f1_score_metric: 0.4f}",
             ]
         )
         print(summary)

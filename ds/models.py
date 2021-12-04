@@ -13,30 +13,34 @@ class Model(torch.nn.Module):
             model_ft = Network(cfg, mode="test", num_classes=full_inat_num_classes)
             model_ft.load_model(path)
             model_ft.freeze_backbone()
-            if k < 4:
-                model_ft.classifier = nn.Linear(4096, num_classes)
-            else:
-                model_ft.classifier = nn.Sequential(nn.Linear(4096, 1000), nn.Linear(1000, num_classes))
+            model_ft.classifier = nn.Linear(4096, num_classes)
+            # if k < 4:
+            #     model_ft.classifier = nn.Linear(4096, num_classes)
+            # else:
+            #     model_ft.classifier = nn.Sequential(nn.Linear(4096, 1000), nn.Linear(1000, num_classes))
 
-        elif stage in ['pretrain', 'check_part_pretrain']:
+        elif stage in ['no_pretrain', 'pretrain', 'check_part_pretrain']:
             model_ft = models.resnet50(pretrained=True)
             for param in model_ft.parameters():
                 param.requires_grad = False
+            if stage in ['pretrain', 'check_part_pretrain']:
+                for i, bottleneck in enumerate(model_ft.layer4.children()):
+                    if i > 1:
+                        for j, layer in enumerate(bottleneck.children()):
+                            if j > 1:
+                                for param in layer.parameters():
+                                    param.requires_grad = True
+
             num_ftrs = model_ft.fc.in_features
-            model_ft.fc = nn.Sequential(nn.Linear(num_ftrs, 1000), nn.Linear(1000, num_classes))
+            model_ft.fc = nn.Linear(num_ftrs, num_classes)
+            # if stage == 'no_pretrain':
+            #     if k >= 4:
+            #         model_ft.fc = nn.Sequential(nn.Linear(num_ftrs, 1000), nn.Linear(1000, num_classes))
             if stage == 'check_part_pretrain':
                 checkpoint = torch.load(path)
                 print(f'Load checkpoint for model and optimizer from {path}')
                 model_ft.load_state_dict(checkpoint['model_state_dict'])
-        elif stage == 'no_pretrain':
-            model_ft = models.resnet50(pretrained=True)
-            for param in model_ft.parameters():
-                param.requires_grad = False
-            num_ftrs = model_ft.fc.in_features
-            if k < 4:
-                model_ft.fc = nn.Linear(num_ftrs, num_classes)
-            else:
-                model_ft.fc = nn.Sequential(nn.Linear(num_ftrs, 1000), nn.Linear(1000, num_classes))
+
         self.model = model_ft
         self.model.to(device)
 

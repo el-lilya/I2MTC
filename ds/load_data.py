@@ -16,7 +16,7 @@ def get_transforms(dataset: str = 'arctic'):
                 transforms.RandomResizedCrop(IMAGE_SIZE),
                 transforms.ColorJitter(brightness=.2, contrast=.2, hue=0),
                 transforms.RandomHorizontalFlip(),
-                # transforms.RandomRotation((0, 20)),
+                # transforms.RandomRotation((0, 20)),  # TODO: blur, optical distortion (albumentations), cutmix
                 transforms.ToTensor(),
                 transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
             ]),
@@ -26,13 +26,12 @@ def get_transforms(dataset: str = 'arctic'):
                 transforms.ToTensor(),
                 transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
             ])}
-    # TODO: add more transforms for arctic photos
-    elif dataset == 'iNaturalist':
+    elif dataset in ['iNaturalist', 'clip']:
         data_transforms = {
             'train': transforms.Compose([
                 transforms.RandomResizedCrop(IMAGE_SIZE, scale=(0.1, 1.0)),
                 transforms.ColorJitter(brightness=.2, contrast=.2, hue=.05),
-                transforms.RandomRotation(45),  # TODO: maybe different angle (30), cutout! (albumentation), cutmix
+                transforms.RandomRotation(30),  # TODO: maybe different angle (30), cutout! (albumentation), cutmix
                 transforms.RandomHorizontalFlip(),
                 transforms.ToTensor(),
                 transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
@@ -56,14 +55,15 @@ def get_transforms(dataset: str = 'arctic'):
 def get_data(root: str, img_dir: str, img_format: str = '.jpeg'):
     df = pd.DataFrame()
     for label in os.listdir(os.path.join(root, img_dir)):
-        df_i = pd.DataFrame(
-            {'img_path': [x for x in os.listdir(os.path.join(root, img_dir, label)) if x.endswith(img_format)],
-             'label': label})
-        df_i['img_path'] = df_i['img_path'].apply(lambda x: os.path.join(label, x))
-        # df_i['img_path'] = df_i['img_path'].apply(lambda x: os.path.join(img_dir, label, x))
-        df = pd.concat([df, df_i])
+        if os.path.isdir(os.path.join(root, img_dir, label)):
+            df_i = pd.DataFrame(
+                {'img_path': [x for x in os.listdir(os.path.join(root, img_dir, label)) if x.endswith(img_format)],
+                 'label': int(label)})
+            df_i['img_path'] = df_i['img_path'].apply(lambda x: os.path.join(label, x))
+            # df_i['img_path'] = df_i['img_path'].apply(lambda x: os.path.join(img_dir, label, x))
+            df = pd.concat([df, df_i])
     # num_classes = df['label'].nunique()
-    num_classes = len(os.listdir(os.path.join(root, img_dir)))
+    num_classes = len([label for label in os.listdir(os.path.join(root, img_dir)) if os.path.isdir(os.path.join(root, img_dir, label))])
     df.reset_index(drop=True, inplace=True)
     return df, num_classes
 
@@ -169,7 +169,7 @@ def urls_from_clip(root='.', data_dir='data/clip'):
             urls.to_csv(f'{root}/{data_dir}/txt/{name}.txt', index=False, header=False)
 
 
-def imgs_from_url(output_folder="data/clip/image_folder", thread_count=64, number_sample_per_shard=200,
+def imgs_from_url(output_folder="data/clip/sim2arctic_clip", thread_count=64, number_sample_per_shard=200,
                   oom_shard_count=2, url_folder="data/clip/txt/"):
     cmd = f'img2dataset  --output_folder={output_folder} --thread_count={thread_count} ' \
           f'--number_sample_per_shard={number_sample_per_shard} --oom_shard_count={oom_shard_count} ' \

@@ -7,7 +7,7 @@ from torchvision import models
 def main():
     # urls_from_clip()
     # imgs_from_url()
-    # print(get_data(root='.', img_dir='data/clip/image_folder', img_format='.jpg'))
+    # print(get_data(root='.', img_dir='data/clip/sim2arctic_clip', img_format='.jpg'))
     for i, bottleneck in enumerate(models.resnet50().layer4.children()):
         if i > 1:
             print(i, bottleneck)

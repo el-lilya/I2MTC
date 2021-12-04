@@ -18,22 +18,29 @@ from PIL import Image
 import os
 import shutil
 from torch.optim.lr_scheduler import ReduceLROnPlateau
-
+from warmup_scheduler import GradualWarmupScheduler
+from torch.optim.lr_scheduler import StepLR
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 # Data configuration
 root = '.'
-samples_per_class = 50
-data_dir = f"data/sim2arctic_{samples_per_class}"
 model_name = 'resnet50'
 folder_save = f'{root}/results/pretrain'
 stage = 'pretrain'
-dataset = 'iNaturalist'
+# dataset = 'iNaturalist'
+dataset = 'clip'
+img_format = '.jpg'
+if dataset == 'iNaturalist':
+    samples_per_class = 50
+    data_dir = f"data/sim2arctic_{samples_per_class}"
+else:
+    data_dir = f"data/clip/sim2arctic_clip"
+
 loss = torch.nn.CrossEntropyLoss(reduction="mean")
 
 # Hyperparameters
-LR = 1e-4  # lr < 5e-4
+LR = 1e-3  # lr < 5e-4
 batch_size_train = 16
 batch_size_test = 16
 
@@ -42,16 +49,19 @@ EPOCH_COUNT = 50
 LOG_PATH = f"{root}/runs"
 
 # for colab
-colab = True
+colab = False
 save_checkpoint = True
 if colab:
     batch_size_train = 64
     batch_size_test = 64
     root = '/content'
-    data_dir = 'sim2arctic_50'
+    if dataset == 'iNaturalist':
+        data_dir = f"sim2arctic_50"
+    else:
+        data_dir = f"sim2arctic_clip"
     root_save = '/content/drive/MyDrive/I2MTC/'
     LOG_PATH = f"{root_save}/runs"
-    folder_save = f'{root_save}/results/pretrain'
+    folder_save = f'{root_save}/results/{stage}/{dataset}'
 
 DO_TRAIN = True
 
@@ -59,10 +69,10 @@ DO_TRAIN = True
 def main():
     os.makedirs(folder_save, exist_ok=True)
     # create_sim2arctic_from_inaturalist(new_data_dir=data_dir, class_size=samples_per_class)
-    df, num_classes = get_data(root, data_dir, img_format='.jpg')
+    df, num_classes = get_data(root, data_dir, img_format=img_format)
     # Setup the experiment tracker
     name_time = datetime.datetime.now().strftime('%d%h_%I_%M')
-    tracker = TensorboardExperiment(log_path=LOG_PATH + f'/{stage}/experiments/{samples_per_class}_{EPOCH_COUNT}_'
+    tracker = TensorboardExperiment(log_path=LOG_PATH + f'/{stage}/{dataset}/experiments/{EPOCH_COUNT}_'
                                                         f'{np.log10(LR)}_{name_time}')
 
     # # Create the data loaders
@@ -97,9 +107,12 @@ def main():
         model.load_state_dict(checkpoint['model_state_dict'])
         optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
 
-    scheduler = ReduceLROnPlateau(optimizer, 'min')
+    # scheduler = ReduceLROnPlateau(optimizer, 'min')
+    scheduler = StepLR(optimizer, step_size=10, gamma=0.2)
+    scheduler_warmup = GradualWarmupScheduler(optimizer, multiplier=1, total_epoch=10,
+                                              after_scheduler=scheduler)
     # Create the runners
-    train_runner = Runner(train_loader, model, device, optimizer, scheduler, loss=loss)
+    train_runner = Runner(train_loader, model, device, optimizer, scheduler_warmup, loss=loss)
     test_runner = Runner(test_loader, model, device, loss=loss)
 
     # Run the epochs

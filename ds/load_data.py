@@ -116,8 +116,8 @@ def create_sim2arctic_from_inaturalist(root: str = '.',
                      }
 
     arctic_names2labels = {'empty_slot': 0,  # steel table
-                           'pepper': 1,
-                           'tomato': 2,
+                           'pepper': 1,  # with basil
+                           'tomato': 2,  # with radish
                            'kohlrabi': 3,
                            'frisee': 4,  # curly lettuce plants greenhouse, bad in clip
                            'lactúca': 5,

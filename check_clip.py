@@ -37,7 +37,7 @@ LR = 1e-4  # lr < 5e-4
 stage = 'clip'
 
 # for colab
-colab = False
+colab = True
 save_checkpoint = False
 if colab:
     print('Running on colab')
@@ -65,8 +65,7 @@ def main():
                                                  f'/{name_time}')
     # Create the data loaders
     model, preprocess = clip.load(model_name)
-    model.to(device)
-    model.eval()
+    model.to(device).eval()
     test_loader = create_data_loader(annotations_file=df, root=root, data_dir=data_dir,
                                      transform=preprocess, batch_size=batch_size_test)
     # inv_normalize = transforms.Normalize(
@@ -77,30 +76,40 @@ def main():
     # grid_img = torchvision.utils.make_grid(batch_tensor, nrow=4)
     # plt.imshow(inv_normalize(grid_img).permute(1, 2, 0))
     # plt.show()
-    descriptions = dict(enumerate(['empty slots', 'pepper plant', 'tomato plant', 'kohlrabi plant', 'frisee plant',
-                                   'lettuce plant', 'mint plant', 'lettuce oakleaf plant', 'radish plant',
-                                   'basil plant',
-                                   'curly parsley plant', 'cress plant', 'chard plant', 'brassica plant',
-                                   'lettuce endivia plant', 'parsley plant', 'chives plant']))
-    text_tokens = clip.tokenize(["This is " + desc for desc in descriptions.values()])
+    descriptions = {0: 'empty iron surface',
+                    1: 'pepper plant growing in greenhouse',
+                    2: 'tomato plant growing in greenhouse',
+                    3: 'young kohlrabi growing in greenhouse',
+                    4: 'curly lettuce growing in greenhouse',
+                    5: 'lettuce growing in greenhouse',
+                    6: 'mint growing in greenhouse',
+                    7: 'lettuce red oakleaf growing in greenhouse',
+                    8: 'radish plant growing in greenhouse',
+                    9: 'basil growing in greenhouse',
+                    10: 'curly parsley growing in greenhouse',
+                    11: 'cress growing in greenhouse',
+                    12: 'chard growing in greenhouse',
+                    13: 'young brassica growing in greenhouse',
+                    14: 'lettuce endivia growing in greenhouse',
+                    15: 'parsley growing in greenhouse',
+                    16: 'chives growing in greenhouse'}
+    text_tokens = clip.tokenize(["This is " + desc for desc in descriptions.values()]).to(device)
+
     text_features = model.encode_text(text_tokens).float()
     text_features /= text_features.norm(dim=-1, keepdim=True)
-    text_features.to(device)
     y_true_batches = []
     y_pred_batches = []
-    n = 0
-    for image_input, label, idx in test_loader:
-        image_features = model.encode_image(image_input.to(device)).float()
-        image_features /= image_features.norm(dim=-1, keepdim=True)
-        text_probs = (100.0 * image_features @ text_features.T).softmax(dim=-1)
-        top_probs, top_labels = text_probs.cpu().topk(1, dim=-1)
-        y_np = label.cpu().detach().numpy()
-        y_prediction_np = top_labels.cpu().detach().numpy()
-        y_true_batches += [y_np]
-        y_pred_batches += [y_prediction_np]
-        n += 1
-        if n > 1:
-            break
+    with torch.no_grad():
+      for image_input, label, idx in test_loader:
+          image_features = model.encode_image(image_input.to(device)).float()
+          image_features /= image_features.norm(dim=-1, keepdim=True)
+          text_probs = (100.0 * image_features @ text_features.T).softmax(dim=-1)
+          top_probs, top_labels = text_probs.cpu().topk(1, dim=-1)
+          y_np = label.cpu().detach().numpy()
+          y_prediction_np = top_labels.cpu().detach().numpy()
+          y_true_batches += [y_np]
+          y_pred_batches += [y_prediction_np]
+
     y_true_batches = np.concatenate(y_true_batches)
     y_pred_batches = np.concatenate(y_pred_batches)
     f1_score_metric = f1_score(y_true_batches, y_pred_batches, average='weighted')

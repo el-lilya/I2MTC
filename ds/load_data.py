@@ -4,7 +4,7 @@ import pandas as pd
 from torchvision import transforms
 import shutil
 import random
-import albumentations as A
+# import albumentations as A
 IMAGE_SIZE = 224
 import numpy as np
 
@@ -86,14 +86,14 @@ def get_transforms(dataset: str = 'arctic', stage: str = 'no_pretrain', preproce
                 # transforms.ToTensor(),
                 # transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
                 normalize(mean, std),
-                cutout(120, 0.5, True),
+                cutout(120, 0.8, True),
                 to_tensor(),
             ]),
             'test': transforms.Compose([
                 transforms.Resize(IMAGE_SIZE + 32),
                 transforms.CenterCrop(IMAGE_SIZE),
                 transforms.ToTensor(),
-                transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
+                transforms.Normalize(mean, std)
             ])}
     elif dataset in ['iNaturalist', 'clip']:
         data_transforms = {

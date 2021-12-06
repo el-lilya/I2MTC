@@ -9,6 +9,7 @@ import clip
 class Model(torch.nn.Module):
     def __init__(self, name: str, num_classes: int, stage: str, device, path: str = None, k: int = None):
         super().__init__()
+        self.stage = stage
         if stage == 'check_full_pretrain':
             full_inat_num_classes = 8142
             model_ft = Network(cfg, mode="test", num_classes=full_inat_num_classes)
@@ -24,15 +25,20 @@ class Model(torch.nn.Module):
             for param in model.parameters():
                 param.requires_grad = False
             encoder = model.visual
+            hid_dim = 1000
             if 'RN' in name:
                 print('encoder output_dim = ', encoder.output_dim)
-                fc = nn.Linear(encoder.output_dim, num_classes)
+                fc = nn.Sequential(nn.Linear(encoder.output_dim, hid_dim), nn.ReLU(), nn.Linear(hid_dim, num_classes))
+                # fc = nn.Linear(encoder.output_dim, num_classes)
                 model_ft = nn.Sequential(encoder, fc)
             else:
                 encoder.proj = None
-                print('encoder width = ', encoder.width)
-                fc = nn.Linear(encoder.width, num_classes)
+                print('encoder width = ', encoder.transformer.width)
+                fc = nn.Sequential(nn.Linear(encoder.transformer.width, hid_dim), nn.ReLU(), nn.Linear(hid_dim, num_classes))
+                # fc = nn.Linear(encoder.transformer.width, num_classes)
                 model_ft = nn.Sequential(encoder, fc)
+            self.encoder = encoder
+            self.fc = fc
         elif stage in ['no_pretrain', 'pretrain', 'check_part_pretrain']:
             model_ft = models.resnet50(pretrained=True)
             for param in model_ft.parameters():
@@ -59,6 +65,11 @@ class Model(torch.nn.Module):
         self.model.to(device)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        return self.model(x)
+        if self.stage == 'check_clip':
+            x = self.encoder(x.half())
+            x = self.fc(x.float())
+            return x
+        else:
+            return self.model(x)
 
 

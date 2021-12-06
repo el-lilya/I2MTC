@@ -24,6 +24,7 @@ device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 root = '.'
 root_save = '.'
 data_dir = "data/classification_17_clean_clean"
+# model_name = 'ViT-B/16'
 model_name = 'RN50'
 dataset = 'arctic'
 loss = torch.nn.CrossEntropyLoss(reduction="mean")
@@ -79,20 +80,20 @@ def main():
     descriptions = {0: 'empty iron surface',
                     1: 'pepper plant growing in greenhouse',
                     2: 'tomato plant growing in greenhouse',
-                    3: 'young kohlrabi growing in greenhouse',
-                    4: 'curly lettuce growing in greenhouse',
-                    5: 'lettuce growing in greenhouse',
-                    6: 'mint growing in greenhouse',
-                    7: 'lettuce red oakleaf growing in greenhouse',
+                    3: 'kohlrabi plant growing in greenhouse',
+                    4: 'mizuna lettuce plant growing in greenhouse',
+                    5: 'loose-leaf lettuce plant growing in greenhouse',
+                    6: 'mint plant growing in greenhouse',
+                    7: 'red oak leaf lettuce plant growing in greenhouse',
                     8: 'radish plant growing in greenhouse',
-                    9: 'basil growing in greenhouse',
-                    10: 'curly parsley growing in greenhouse',
-                    11: 'cress growing in greenhouse',
-                    12: 'chard growing in greenhouse',
-                    13: 'young brassica growing in greenhouse',
-                    14: 'lettuce endivia growing in greenhouse',
-                    15: 'parsley growing in greenhouse',
-                    16: 'chives growing in greenhouse'}
+                    9: 'basil plant growing in greenhouse',
+                    10: 'curly parsley plant growing in greenhouse',
+                    11: 'cress lettuce plant growing in greenhouse',
+                    12: 'chard lettuce plant growing in greenhouse',
+                    13: 'brassica plant growing in greenhouse',
+                    14: 'lettuce endive plant growing in greenhouse',
+                    15: 'flat-leaf parsley plant growing in greenhouse',
+                    16: 'chives plant growing in greenhouse'}
     text_tokens = clip.tokenize(["This is " + desc for desc in descriptions.values()]).to(device)
 
     text_features = model.encode_text(text_tokens).float()

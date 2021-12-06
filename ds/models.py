@@ -3,6 +3,7 @@ from torchvision import models
 import torch.nn as nn
 from ds.checkpoints.BBN_master.lib.config import cfg
 from ds.checkpoints.BBN_master.lib.net.network import Network
+import clip
 
 
 class Model(torch.nn.Module):
@@ -18,7 +19,20 @@ class Model(torch.nn.Module):
             #     model_ft.classifier = nn.Linear(4096, num_classes)
             # else:
             #     model_ft.classifier = nn.Sequential(nn.Linear(4096, 1000), nn.Linear(1000, num_classes))
-
+        elif stage == 'check_clip':
+            model, preprocess = clip.load(name)
+            for param in model.parameters():
+                param.requires_grad = False
+            encoder = model.visual
+            if 'RN' in name:
+                print('encoder output_dim = ', encoder.output_dim)
+                fc = nn.Linear(encoder.output_dim, num_classes)
+                model_ft = nn.Sequential(encoder, fc)
+            else:
+                encoder.proj = None
+                print('encoder width = ', encoder.width)
+                fc = nn.Linear(encoder.width, num_classes)
+                model_ft = nn.Sequential(encoder, fc)
         elif stage in ['no_pretrain', 'pretrain', 'check_part_pretrain']:
             model_ft = models.resnet50(pretrained=True)
             for param in model_ft.parameters():
@@ -46,3 +60,5 @@ class Model(torch.nn.Module):
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         return self.model(x)
+
+

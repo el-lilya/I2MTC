@@ -11,18 +11,18 @@ from ds.dataset import create_data_loader
 import datetime
 from matplotlib import pyplot as plt
 import torchvision
-from torchvision import transforms as T
+from torchvision import transforms
 from torch.optim.lr_scheduler import ReduceLROnPlateau
 from warmup_scheduler import GradualWarmupScheduler
 from torch.optim.lr_scheduler import StepLR
-
+import clip
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 # Data configuration
 root = '.'
 root_save = '.'
 data_dir = "data/classification_17_clean_clean"
-model_name = 'resnet50'
+model_name = 'RN50'  # ViT-B/16
 dataset = 'arctic'
 loss = torch.nn.CrossEntropyLoss(reduction="mean")
 
@@ -32,7 +32,7 @@ batch_size_test = 16
 LR = 1e-4  # lr < 5e-4
 
 # experiment settings
-# stage = 'check_part_pretrain'  # 'check_full_pretrain', 'check_part_pretrain', 'no_pretrain'
+# stage = 'check_part_pretrain'  # 'check_full_pretrain', 'check_part_pretrain', 'no_pretrain', 'check_clip'
 
 # for colab
 colab = False
@@ -58,13 +58,14 @@ EPOCH_COUNT = 20
 kk = range(1, 2)
 number_of_exp = 1
 
-pretrain_dataset = 'iNaturalist'  # iNaturalist, clip
+pretrain_dataset = None
+# pretrain_dataset = 'iNaturalist'  # iNaturalist, clip
 
 
 def main():
     df, num_classes = get_data(root, data_dir)
     # predictions = pd.DataFrame()
-    for stage in ['check_part_pretrain']:
+    for stage in ['check_clip']:
         folder_save = f'{root_save}/results/{stage}'
         for k in kk:
             if k == 0:
@@ -87,15 +88,26 @@ def main():
                 train, test = train_test_split_k_shot(df, k, experiment)
                 train.to_csv(f'{root_save}/splits/train_k{k}_#{experiment}', index=False)
                 test.to_csv(f'{root_save}/splits/test_k{k}_#{experiment}', index=False)
-                transform = get_transforms(dataset)
+                if stage == 'check_clip':
+                    preprocess = clip.load(model_name)[1]
+                else:
+                    preprocess = None
+                transform = get_transforms(dataset, stage, preprocess)
                 train_loader = create_data_loader(annotations_file=train, root=root, data_dir=data_dir,
                                                   transform=transform['train'], batch_size=batch_size_train)
                 test_loader = create_data_loader(annotations_file=test, root=root, data_dir=data_dir,
                                                  transform=transform['test'], batch_size=batch_size_test)
-
+                inv_normalize = transforms.Normalize(
+                    mean=[-0.485 / 0.229, -0.456 / 0.224, -0.406 / 0.225],
+                    std=[1 / 0.229, 1 / 0.224, 1 / 0.225]
+                )
+                batch_tensor = next(iter(train_loader))[0]
+                grid_img = torchvision.utils.make_grid(batch_tensor, nrow=4)
+                plt.imshow(inv_normalize(grid_img).permute(1, 2, 0))
+                plt.show()
                 # Model and Optimizer
                 path = None
-                if stage == 'no_pretrain':
+                if stage in ['no_pretrain', 'check_clip']:
                     pass
                 elif stage == 'check_part_pretrain':
                     path = f'{root_save}/results/pretrain/{pretrain_dataset}/acc= 0.54.pth'
@@ -105,12 +117,12 @@ def main():
                     print(f'Stage {stage} is not implemented!')
                 model = Model(model_name, num_classes, stage, device, path, k)
                 optimizer = torch.optim.Adam(model.parameters(), lr=LR)
-                # scheduler = ReduceLROnPlateau(optimizer, 'min')
-                scheduler = StepLR(optimizer, step_size=10, gamma=0.1)
-                scheduler_warmup = GradualWarmupScheduler(optimizer, multiplier=1, total_epoch=5,
-                                                          after_scheduler=scheduler)
+                scheduler = ReduceLROnPlateau(optimizer, 'min')
+                # scheduler = StepLR(optimizer, step_size=10, gamma=0.1)
+                # scheduler_warmup = GradualWarmupScheduler(optimizer, multiplier=1, total_epoch=5,
+                #                                           after_scheduler=scheduler)
                 # Create the runners
-                train_runner = Runner(train_loader, model, device, optimizer, scheduler_warmup, loss=loss)
+                train_runner = Runner(train_loader, model, device, optimizer, scheduler, loss=loss)
                 test_runner = Runner(test_loader, model, device, loss=loss)
 
                 # Run the epochs

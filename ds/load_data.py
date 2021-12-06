@@ -4,21 +4,90 @@ import pandas as pd
 from torchvision import transforms
 import shutil
 import random
-
+import albumentations as A
 IMAGE_SIZE = 224
+import numpy as np
 
 
-def get_transforms(dataset: str = 'arctic'):
+def to_tensor():
+    def _to_tensor(image):
+        if len(image.shape) == 3:
+            return torch.from_numpy(
+                image.transpose(2, 0, 1).astype(np.float32))
+        else:
+            return torch.from_numpy(image[None, :, :].astype(np.float32))
+
+    return _to_tensor
+
+
+def normalize(mean, std):
+    mean = np.array(mean)
+    std = np.array(std)
+
+    def _normalize(image):
+        image = np.asarray(image).astype(np.float32) / 255.
+        image = (image - mean) / std
+        return image
+
+    return _normalize
+
+
+def cutout(mask_size, p, cutout_inside, mask_color=(0, 0, 0)):
+    mask_size_half = mask_size // 2
+    offset = 1 if mask_size % 2 == 0 else 0
+
+    def _cutout(image):
+        image = np.asarray(image).copy()
+
+        if np.random.random() > p:
+            return image
+
+        h, w = image.shape[:2]
+
+        if cutout_inside:
+            cxmin, cxmax = mask_size_half, w + offset - mask_size_half
+            cymin, cymax = mask_size_half, h + offset - mask_size_half
+        else:
+            cxmin, cxmax = 0, w + offset
+            cymin, cymax = 0, h + offset
+
+        cx = np.random.randint(cxmin, cxmax)
+        cy = np.random.randint(cymin, cymax)
+        xmin = cx - mask_size_half
+        ymin = cy - mask_size_half
+        xmax = xmin + mask_size
+        ymax = ymin + mask_size
+        xmin = max(0, xmin)
+        ymin = max(0, ymin)
+        xmax = min(w, xmax)
+        ymax = min(h, ymax)
+        image[ymin:ymax, xmin:xmax] = mask_color
+        return image
+
+    return _cutout
+
+
+def get_transforms(dataset: str = 'arctic', stage: str = 'no_pretrain', preprocess=None):
     if dataset == 'arctic':
+        if stage == 'check_clip':
+            mean = (0.48145466, 0.4578275, 0.40821073)
+            std = (0.26862954, 0.26130258, 0.27577711)
+        else:
+            mean = [0.485, 0.456, 0.406]
+            std = [0.229, 0.224, 0.225]
+
         data_transforms = {
             'train': transforms.Compose([
                 transforms.CenterCrop((800, 1000)),  # remove bottom digits in some pictures
-                transforms.RandomResizedCrop(IMAGE_SIZE),
                 transforms.ColorJitter(brightness=.2, contrast=.2, hue=0),
                 transforms.RandomHorizontalFlip(),
-                # transforms.RandomRotation((0, 20)),  # TODO: blur, optical distortion (albumentations), cutmix
-                transforms.ToTensor(),
-                transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
+                transforms.RandomRotation(30),  # TODO: blur, optical distortion (albumentations), cutmix
+                transforms.RandomResizedCrop(IMAGE_SIZE),
+                # transforms.ToTensor(),
+                # transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
+                normalize(mean, std),
+                cutout(120, 0.5, True),
+                to_tensor(),
             ]),
             'test': transforms.Compose([
                 transforms.Resize(IMAGE_SIZE + 32),
@@ -31,7 +100,7 @@ def get_transforms(dataset: str = 'arctic'):
             'train': transforms.Compose([
                 transforms.RandomResizedCrop(IMAGE_SIZE, scale=(0.1, 1.0)),
                 transforms.ColorJitter(brightness=.2, contrast=.2, hue=.05),
-                transforms.RandomRotation(30),  # TODO: maybe different angle (30), cutout! (albumentation), cutmix
+                transforms.RandomRotation(30),
                 transforms.RandomHorizontalFlip(),
                 transforms.ToTensor(),
                 transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])

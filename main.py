@@ -36,7 +36,7 @@ LR = 1e-3  # lr < 5e-4
 # stage = 'check_part_pretrain'  # 'check_full_pretrain', 'check_part_pretrain', 'no_pretrain', 'check_clip'
 
 # for colab
-colab = False
+colab = True
 save_checkpoint = False
 if colab:
     print('Running on colab')
@@ -57,7 +57,7 @@ LOG_PATH = f"{root_save}/runs"
 # test train
 EPOCH_COUNT = 50
 kk = list(range(0, 6)) + [8]
-number_of_exp = 3
+number_of_exp = 2
 comment = '5_warmup'
 pretrain_dataset = None
 # pretrain_dataset = 'iNaturalist'  # iNaturalist, clip
@@ -74,7 +74,7 @@ def main():
                 do_train = False
             else:
                 do_train = True
-            for experiment in range(number_of_exp):
+            for experiment in range(3, 3 + number_of_exp):
                 print('*' * 10)
                 print(f'k={k}, experiment={experiment}')
                 print('*' * 10)
@@ -136,7 +136,7 @@ def main():
                     eval_model(test_runner, tracker)
                     tracker.add_epoch_confusion_matrix(test_runner.y_true_batches, test_runner.y_pred_batches, 0)
 
-                tracker.add_hparams({'stage': f'{stage}_{model_name}', 'k': k, '#_of_exp': experiment, 'batch_size': batch_size_train,
+                tracker.add_hparams({'stage': f'{stage}_{pretrain_dataset}', 'k': k, '#_of_exp': experiment, 'batch_size': batch_size_train,
                                      'epochs': EPOCH_COUNT, 'lr': LR},
                                     {
                                         'train_f1_score': train_runner.f1_score_metric,

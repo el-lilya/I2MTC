@@ -64,6 +64,7 @@ def main():
     name_time = datetime.datetime.now().strftime('%d%h_%I_%M')
     tracker = TensorboardExperiment(log_path=f'{LOG_PATH}/{stage}/experiments/k={k}_exp#{experiment}_'
                                              f'/{name_time}')
+    top_k_acc_score = pd.DataFrame()
     for model_name in ['RN50', 'ViT-B/16']:
         # Create the data loaders
         model, preprocess = clip.load(model_name)
@@ -118,10 +119,16 @@ def main():
         y_true_batches = np.concatenate(y_true_batches)
         y_pred_batches = np.concatenate(y_pred_batches)
         # print(y_true_batches, y_pred_batches)
-        top_k_acc_score = pd.DataFrame()
+
         for top_k in range(1, 5):
-            top_k_acc_score.append({'k': k, 'top_k_acc': top_k_accuracy_score(y_true_batches, y_pred_batches, k=5)})
-        top_k_acc_score.to_csv(f'top_k_{stage}_{model_name}')
+            print(top_k_accuracy_score(y_true_batches, y_pred_batches, k=top_k))
+            top_k_acc_score = top_k_acc_score.append(pd.Series({'model': model_name, 'top_k': top_k,
+                                                                'top_k_acc': top_k_accuracy_score(y_true_batches,
+                                                                                                  y_pred_batches,
+                                                                                                  k=top_k)}),
+                                                     ignore_index=True)
+        print(top_k_acc_score)
+        top_k_acc_score.to_csv(f'{folder_save}/top_k')
         # f1_score_metric = f1_score(y_true_batches, y_pred_batches, average='weighted')
         # print(f1_score_metric)
         # tracker.add_epoch_confusion_matrix(y_true_batches, y_pred_batches, 0)

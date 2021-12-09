@@ -68,6 +68,7 @@ stage = 'check_part_pretrain'
 def main():
     df, num_classes = get_data(root, data_dir)
     # predictions = pd.DataFrame()
+    top_k_acc_score = pd.DataFrame()
     for pretrain_dataset in ['iNaturalist', 'clip']:
         folder_save = f'{root_save}/results/{stage}'
         for k in kk:
@@ -136,13 +137,15 @@ def main():
                 else:
                     eval_model(test_runner, tracker)
                     tracker.add_epoch_confusion_matrix(test_runner.y_true_batches, test_runner.y_pred_batches, 0)
-
-                tracker.add_hparams({'stage': f'{stage}_{pretrain_dataset}', 'k': k, '#_of_exp': experiment, 'batch_size': batch_size_train,
-                                     'epochs': EPOCH_COUNT, 'lr': LR},
-                                    {
-                                        'train_f1_score': train_runner.f1_score_metric,
-                                        'test_f1_score': test_runner.best_f1_score
-                                    })
+                df = test_runner.top_k
+                df['pretrain_dataset'] = pretrain_dataset
+                top_k_acc_score = pd.concat([top_k_acc_score, df])
+                # tracker.add_hparams({'stage': f'{stage}_{pretrain_dataset}', 'k': k, '#_of_exp': experiment, 'batch_size': batch_size_train,
+                #                      'epochs': EPOCH_COUNT, 'lr': LR},
+                #                     {
+                #                         'train_f1_score': train_runner.f1_score_metric,
+                #                         'test_f1_score': test_runner.best_f1_score
+                #                     })
         #         predictions_exp = pd.DataFrame({'k': k, 'experiment': experiment,
         #                                        'path': np.concatenate(test_runner.idxs),
         #                                         'label': test_runner.y_true_batches,

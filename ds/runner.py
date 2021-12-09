@@ -2,7 +2,7 @@ from typing import Any, Optional
 
 import numpy as np
 import torch
-from sklearn.metrics import accuracy_score, f1_score
+from sklearn.metrics import accuracy_score, f1_score, top_k_accuracy_score
 from torch.utils.data.dataloader import DataLoader
 from tqdm import tqdm
 
@@ -33,6 +33,7 @@ class Runner:
         self.compute_loss = loss
         self.y_true_batches: List[List[Any]] = []
         self.y_pred_batches: List[List[Any]] = []
+        self.y_all_preds_batched: List[List[Any]] = []
         self.idxs: List[List[Any]] = []
         # Assume Stage based on presence of optimizer
         self.stage = Stage.VAL if optimizer is None else Stage.TRAIN
@@ -40,6 +41,7 @@ class Runner:
         self.scheduler = scheduler
         self.best_f1_score = 0
         self.model_state = None
+        self.top_k = {}
 
     @property
     def avg_accuracy(self):
@@ -81,6 +83,7 @@ class Runner:
 
         self.y_true_batches += [y_np]
         self.y_pred_batches += [y_prediction_np]
+        self.y_all_preds_batched += [prediction.cpu().detach().numpy()]
         return loss, batch_accuracy
 
     def reset(self):
@@ -116,6 +119,8 @@ def run_epoch(
     test_runner.f1_score_metric = f1_score(test_runner.y_true_batches,
                                            test_runner.y_pred_batches,
                                            average='weighted')  # or 'weighted'
+    for top_k in range(1, 5):
+        test_runner.top_k[top_k] = top_k_accuracy_score(test_runner.y_true_batches, test_runner.y_all_preds_batched)
     # Log Validation Epoch Loss and Metrics
     experiment.add_epoch_metric("loss", test_runner.avg_loss, epoch_id)
     # experiment.add_epoch_metric("accuracy", test_runner.avg_accuracy, epoch_id)

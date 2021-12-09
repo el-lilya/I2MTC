@@ -16,7 +16,7 @@ from warmup_scheduler import GradualWarmupScheduler
 from torch.optim.lr_scheduler import StepLR
 import clip
 from torchvision import transforms
-from sklearn.metrics import accuracy_score, f1_score
+from sklearn.metrics import accuracy_score, f1_score, top_k_accuracy_score
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
@@ -25,7 +25,7 @@ root = '.'
 root_save = '.'
 data_dir = "data/classification_17_clean_clean"
 # model_name = 'ViT-B/16'
-model_name = 'RN50'
+# model_name = 'RN50'
 dataset = 'arctic'
 loss = torch.nn.CrossEntropyLoss(reduction="mean")
 
@@ -63,63 +63,72 @@ def main():
     # Setup the experiment tracker
     name_time = datetime.datetime.now().strftime('%d%h_%I_%M')
     tracker = TensorboardExperiment(log_path=f'{LOG_PATH}/{stage}/experiments/k={k}_exp#{experiment}_'
-                                                 f'/{name_time}')
-    # Create the data loaders
-    model, preprocess = clip.load(model_name)
-    model.to(device).eval()
-    test_loader = create_data_loader(annotations_file=df, root=root, data_dir=data_dir,
-                                     transform=preprocess, batch_size=batch_size_test)
-    # inv_normalize = transforms.Normalize(
-    #     mean=[-0.485 / 0.229, -0.456 / 0.224, -0.406 / 0.225],
-    #     std=[1 / 0.229, 1 / 0.224, 1 / 0.225]
-    # )
-    # batch_tensor = next(iter(test_loader))[0]
-    # grid_img = torchvision.utils.make_grid(batch_tensor, nrow=4)
-    # plt.imshow(inv_normalize(grid_img).permute(1, 2, 0))
-    # plt.show()
-    descriptions = {0: 'empty iron surface',
-                    1: 'pepper plant growing in greenhouse',
-                    2: 'tomato plant growing in greenhouse',
-                    3: 'kohlrabi plant growing in greenhouse',
-                    4: 'mizuna lettuce plant growing in greenhouse',
-                    5: 'loose-leaf lettuce plant growing in greenhouse',
-                    6: 'mint plant growing in greenhouse',
-                    7: 'red oak leaf lettuce plant growing in greenhouse',
-                    8: 'radish plant growing in greenhouse',
-                    9: 'basil plant growing in greenhouse',
-                    10: 'curly parsley plant growing in greenhouse',
-                    11: 'cress lettuce plant growing in greenhouse',
-                    12: 'chard lettuce plant growing in greenhouse',
-                    13: 'brassica plant growing in greenhouse',
-                    14: 'lettuce endive plant growing in greenhouse',
-                    15: 'flat-leaf parsley plant growing in greenhouse',
-                    16: 'chives plant growing in greenhouse'}
-    text_tokens = clip.tokenize(["This is " + desc for desc in descriptions.values()]).to(device)
+                                             f'/{name_time}')
+    for model_name in ['RN50', 'ViT-B/16']:
+        # Create the data loaders
+        model, preprocess = clip.load(model_name)
+        model.to(device).eval()
+        test_loader = create_data_loader(annotations_file=df, root=root, data_dir=data_dir,
+                                         transform=preprocess, batch_size=batch_size_test)
+        # inv_normalize = transforms.Normalize(
+        #     mean=[-0.485 / 0.229, -0.456 / 0.224, -0.406 / 0.225],
+        #     std=[1 / 0.229, 1 / 0.224, 1 / 0.225]
+        # )
+        # batch_tensor = next(iter(test_loader))[0]
+        # grid_img = torchvision.utils.make_grid(batch_tensor, nrow=4)
+        # plt.imshow(inv_normalize(grid_img).permute(1, 2, 0))
+        # plt.show()
+        descriptions = {0: 'empty iron surface',
+                        1: 'pepper plant growing in greenhouse',
+                        2: 'tomato plant growing in greenhouse',
+                        3: 'kohlrabi plant growing in greenhouse',
+                        4: 'mizuna lettuce plant growing in greenhouse',
+                        5: 'loose-leaf lettuce plant growing in greenhouse',
+                        6: 'mint plant growing in greenhouse',
+                        7: 'red oak leaf lettuce plant growing in greenhouse',
+                        8: 'radish plant growing in greenhouse',
+                        9: 'basil plant growing in greenhouse',
+                        10: 'curly parsley plant growing in greenhouse',
+                        11: 'cress lettuce plant growing in greenhouse',
+                        12: 'swiss chard lettuce plant growing in greenhouse',
+                        13: 'brassica plant growing in greenhouse',
+                        14: 'lettuce endive plant growing in greenhouse',
+                        15: 'flat-leaf parsley plant growing in greenhouse',
+                        16: 'chives plant growing in greenhouse'}
+        text_tokens = clip.tokenize(["This is " + desc for desc in descriptions.values()]).to(device)
 
-    text_features = model.encode_text(text_tokens).float()
-    text_features /= text_features.norm(dim=-1, keepdim=True)
-    y_true_batches = []
-    y_pred_batches = []
-    with torch.no_grad():
-      for image_input, label, idx in test_loader:
-          image_features = model.encode_image(image_input.to(device)).float()
-          image_features /= image_features.norm(dim=-1, keepdim=True)
-          text_probs = (100.0 * image_features @ text_features.T).softmax(dim=-1)
-          top_probs, top_labels = text_probs.cpu().topk(1, dim=-1)
-          y_np = label.cpu().detach().numpy()
-          y_prediction_np = top_labels.cpu().detach().numpy()
-          y_true_batches += [y_np]
-          y_pred_batches += [y_prediction_np]
+        text_features = model.encode_text(text_tokens).float()
+        text_features /= text_features.norm(dim=-1, keepdim=True)
+        y_true_batches = []
+        y_pred_batches = []
+        with torch.no_grad():
+            for image_input, label, idx in test_loader:
+                image_features = model.encode_image(image_input.to(device)).float()
+                image_features /= image_features.norm(dim=-1, keepdim=True)
+                text_probs = (100.0 * image_features @ text_features.T).softmax(dim=-1)
+                # top_probs, top_labels = text_probs.cpu().topk(1, dim=-1)
+                text_probs = text_probs.cpu().detach().numpy()
+                y_np = label.cpu().detach().numpy()
+                # y_prediction_np = top_labels.cpu().detach().numpy()
+                y_prediction_np = text_probs
+                print(text_probs.shape)
+                y_true_batches += [y_np]
+                y_pred_batches += [y_prediction_np]
 
-    y_true_batches = np.concatenate(y_true_batches)
-    y_pred_batches = np.concatenate(y_pred_batches)
-    f1_score_metric = f1_score(y_true_batches, y_pred_batches, average='weighted')
-    print(f1_score_metric)
-    tracker.add_epoch_confusion_matrix(y_true_batches, y_pred_batches, 0)
-    #
-    tracker.add_hparams({'stage': stage, 'k': 0, '#_of_exp': 0, 'batch_size': 0,
-                         'epochs': 0, 'lr': 0},
-                        {'test_f1_score': f1_score_metric})
+        y_true_batches = np.concatenate(y_true_batches)
+        y_pred_batches = np.concatenate(y_pred_batches)
+        # print(y_true_batches, y_pred_batches)
+        top_k_acc_score = pd.DataFrame()
+        for top_k in range(1, 5):
+            top_k_acc_score.append({'k': k, 'top_k_acc': top_k_accuracy_score(y_true_batches, y_pred_batches, k=5)})
+        top_k_acc_score.to_csv(f'top_k_{stage}_{model_name}')
+        # f1_score_metric = f1_score(y_true_batches, y_pred_batches, average='weighted')
+        # print(f1_score_metric)
+        # tracker.add_epoch_confusion_matrix(y_true_batches, y_pred_batches, 0)
+        # #
+        # tracker.add_hparams({'stage': stage, 'k': 0, '#_of_exp': 0, 'batch_size': 0,
+        #                      'epochs': 0, 'lr': 0},
+        #                     {'test_f1_score': f1_score_metric})
 
 
 if __name__ == "__main__":

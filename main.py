@@ -22,7 +22,7 @@ device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 root = '.'
 root_save = '.'
 data_dir = "data/classification_17_clean_clean"
-model_name = 'resnet50'  # c, RN50
+model_name = 'resnet50'
 dataset = 'arctic'
 loss = torch.nn.CrossEntropyLoss(reduction="mean")
 
@@ -56,8 +56,9 @@ LOG_PATH = f"{root_save}/runs"
 
 # test train
 EPOCH_COUNT = 50
-kk = list(range(0, 6)) + [8]
-number_of_exp = 2
+# kk = list(range(0, 6)) + [8]
+kk = [0]
+number_of_exp = 0
 comment = '5_warmup'
 pretrain_dataset = None
 # pretrain_dataset = 'iNaturalist'  # iNaturalist, clip
